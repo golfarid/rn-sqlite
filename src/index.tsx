@@ -1,9 +1,11 @@
 import { NativeModules } from 'react-native';
-
-type RnSqliteType = {
-  multiply(a: number, b: number): Promise<number>;
-};
+import { SQLite } from './sqlite/sqlite';
 
 const { RnSqlite } = NativeModules;
 
-export default RnSqlite as RnSqliteType;
+export class SQLiteModule {
+  public static async openDatabase(name: string) {
+    await RnSqlite.openDatabase(name);
+    return new SQLite();
+  }
+}

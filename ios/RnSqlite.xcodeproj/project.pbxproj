@@ -7,11 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-
-
-		F4FF95D7245B92E800C19C63 /*  RnSqlite.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FF95D6245B92E800C19C63 /*  RnSqlite.swift */; };
-
-		5E555C0D2413F4C50049A1A2 /* RnSqlite.mm in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* RnSqlite.mm */; };
+		E6E50EF4295127E1880AB666 /* Pods_RnSqlite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8A8D16177C90E7250D5E8357 /* Pods_RnSqlite.framework */; };
+		F4FF95D7245B92E800C19C63 /* RnSqlite.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4FF95D6245B92E800C19C63 /* RnSqlite.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,13 +24,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		055E76490B0C0FCC3C51BC9D /* Pods-RnSqlite.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RnSqlite.debug.xcconfig"; path = "Target Support Files/Pods-RnSqlite/Pods-RnSqlite.debug.xcconfig"; sourceTree = "<group>"; };
 		134814201AA4EA6300B7C361 /* libRnSqlite.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRnSqlite.a; sourceTree = BUILT_PRODUCTS_DIR; };
-
-
+		7999B395C15893922D939CB3 /* Pods-RnSqlite.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RnSqlite.release.xcconfig"; path = "Target Support Files/Pods-RnSqlite/Pods-RnSqlite.release.xcconfig"; sourceTree = "<group>"; };
+		8A8D16177C90E7250D5E8357 /* Pods_RnSqlite.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RnSqlite.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3E7B5891CC2AC0600A0062D /* RnSqlite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RnSqlite.m; sourceTree = "<group>"; };
 		F4FF95D5245B92E700C19C63 /* RnSqlite-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "RnSqlite-Bridging-Header.h"; sourceTree = "<group>"; };
 		F4FF95D6245B92E800C19C63 /* RnSqlite.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RnSqlite.swift; sourceTree = "<group>"; };
-
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +38,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E6E50EF4295127E1880AB666 /* Pods_RnSqlite.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -58,14 +56,31 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
-
-
 				F4FF95D6245B92E800C19C63 /* RnSqlite.swift */,
 				B3E7B5891CC2AC0600A0062D /* RnSqlite.m */,
 				F4FF95D5245B92E700C19C63 /* RnSqlite-Bridging-Header.h */,
-
 				134814211AA4EA7D00B7C361 /* Products */,
+				9B3CD13A51A5EB52253495C5 /* Pods */,
+				5F314B82DA6F18ACC51ACF18 /* Frameworks */,
 			);
+			sourceTree = "<group>";
+		};
+		5F314B82DA6F18ACC51ACF18 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				8A8D16177C90E7250D5E8357 /* Pods_RnSqlite.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9B3CD13A51A5EB52253495C5 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				055E76490B0C0FCC3C51BC9D /* Pods-RnSqlite.debug.xcconfig */,
+				7999B395C15893922D939CB3 /* Pods-RnSqlite.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -75,6 +90,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 58B511EF1A9E6C8500147676 /* Build configuration list for PBXNativeTarget "RnSqlite" */;
 			buildPhases = (
+				3291C085146BA6D0534D3FB9 /* [CP] Check Pods Manifest.lock */,
 				58B511D71A9E6C8500147676 /* Sources */,
 				58B511D81A9E6C8500147676 /* Frameworks */,
 				58B511D91A9E6C8500147676 /* CopyFiles */,
@@ -120,16 +136,37 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		3291C085146BA6D0534D3FB9 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RnSqlite-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		58B511D71A9E6C8500147676 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-
-
 				F4FF95D7245B92E800C19C63 /* RnSqlite.swift in Sources */,
-				B3E7B58A1CC2AC0600A0062D /* RnSqlite.m in Sources */,
-
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,6 +268,7 @@
 		};
 		58B511F01A9E6C8500147676 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 055E76490B0C0FCC3C51BC9D /* Pods-RnSqlite.debug.xcconfig */;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -242,16 +280,15 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RnSqlite;
 				SKIP_INSTALL = YES;
-
 				SWIFT_OBJC_BRIDGING_HEADER = "RnSqlite-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-
 			};
 			name = Debug;
 		};
 		58B511F11A9E6C8500147676 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7999B395C15893922D939CB3 /* Pods-RnSqlite.release.xcconfig */;
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -263,10 +300,8 @@
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RnSqlite;
 				SKIP_INSTALL = YES;
-
 				SWIFT_OBJC_BRIDGING_HEADER = "RnSqlite-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-
 			};
 			name = Release;
 		};
