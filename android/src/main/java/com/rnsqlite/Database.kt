@@ -6,19 +6,9 @@ import android.database.Cursor.*
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class Database(context: Context, name: String, version: Int):
+class Database(context: Context, name: String, version: Int) :
   SQLiteOpenHelper(context, name, null, version) {
-  companion object {
-    @Volatile
-    private var INSTANCE: Database? = null
-
-    fun createInstance(context: Context, name: String, version: Int): Database =
-      INSTANCE ?: synchronized(this) {
-        INSTANCE ?: Database(context, name, version).also { INSTANCE = it }
-      }
-
-    fun getInstance(): Database? = INSTANCE
-  }
+  private val db: SQLiteDatabase = this.writableDatabase
 
   override fun onCreate(db: SQLiteDatabase?) {
 //    TODO("Not yet implemented")
@@ -31,10 +21,16 @@ class Database(context: Context, name: String, version: Int):
   fun executeSql(sql: String, params: Array<Any?>): MutableList<MutableList<Any?>?> {
     var cursor: Cursor? = null
     try {
-      val db = this.writableDatabase
       cursor = db.rawQuery(sql, escapeParams(params))
       val result = MutableList<MutableList<Any?>?>(0) { null }
+
       if (cursor.moveToFirst()) {
+        val header = MutableList<Any?>(0) {null}
+        (0 until cursor.columnCount).forEach {
+          header.add(cursor.getColumnName(it))
+        }
+        result.add(header)
+
         do {
           val row = MutableList<Any?>(0) {null}
           (0 until cursor.columnCount).forEach {
@@ -58,27 +54,39 @@ class Database(context: Context, name: String, version: Int):
     }
   }
 
+  fun getLastInsertRowId(): Int? {
+    var cursor: Cursor? = null
+    try {
+      cursor = db.rawQuery("SELECT last_insert_rowid()", Array<String?>(0){null})
+      if (cursor.moveToFirst()) {
+        if (cursor.columnCount > 0 && cursor.getType(0) == FIELD_TYPE_INTEGER)
+        return cursor.getInt(0)
+      }
+
+      return 0
+    } finally {
+      cursor?.close()
+    }
+  }
+
   fun beginTransaction() {
-    val db = this.writableDatabase
     db.beginTransaction()
   }
 
   fun commitTransaction() {
-    val db = this.writableDatabase
     db.setTransactionSuccessful()
   }
 
   fun endTransaction() {
-    val db = this.writableDatabase
     db.endTransaction()
   }
 
   private fun escapeParams(params: Array<Any?>): Array<String> {
     val strArray = Array(params.size) {""}
-    (0 until params.size).forEach {
+    (params.indices).forEach {
       strArray[it] = DatabaseUtils.escapeString(DatabaseUtils.objectToSqlString(params[it]))
     }
 
-    return strArray;
+    return strArray
   }
 }

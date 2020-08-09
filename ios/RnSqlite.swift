@@ -2,122 +2,118 @@ import SQLite3
 
 @objc(RnSqlite)
 class RnSqlite: NSObject {
-    var db: OpaquePointer?
+    static var dbMap = [String : OpaquePointer]()
     
     @objc(openDatabase:withResolver:withRejecter:)
     func openDatabase(name: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
         let filePath = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathExtension(name)
         
-        
+        var db: OpaquePointer?
         if sqlite3_open(filePath.path, &db) != SQLITE_OK {
             NSLog("There is error in creating DB")
             reject("-1", "Database open failed", nil)
         } else {
             NSLog("Database has been created with path \(name)")
+            let uid = NSUUID().uuidString
+            RnSqlite.dbMap[uid] = db
+            resolve(uid)
+        }
+    }
+    
+    @objc(closeDatabase:withResolver:withRejecter:)
+    func closeDatabase(uid: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
+        let db = RnSqlite.dbMap[uid]
+        if sqlite3_close(db) != SQLITE_OK {
+            NSLog("There is error in closing DB")
+            reject("-1", "Database open failed", nil)
+        } else {
+            NSLog("Database has been closed")
+            let db = RnSqlite.dbMap[uid]
+            sqlite3_close(db)
+            RnSqlite.dbMap.removeValue(forKey: uid)
             resolve(nil)
         }
     }
     
-    @objc(executeSql:withParams:withResolver:withRejecter:)
-    func executeSql(sql: String,
+    @objc(executeSql:withSql:withParams:withResolver:withRejecter:)
+    func executeSql(uid: String,
+                    sql: String,
                     params: Array<AnyObject>,
                     resolve:RCTPromiseResolveBlock,
                     reject:RCTPromiseRejectBlock) -> Void {
         var stmt: OpaquePointer?
         
+        let db = RnSqlite.dbMap[uid]
         if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             NSLog("error preparing insert: \(errmsg)")
             reject("-1", "Query failed \(errmsg)", nil)
         } else {
-            for (index, element) in params.enumerated() {
-                NSLog("parameter \(type(of: element))")
-                switch element
-                {
-                    case is NSNull:
-                        if sqlite3_bind_null(stmt, Int32(index + 1)) != SQLITE_OK {
-                            let errmsg = String(cString: sqlite3_errmsg(db)!)
-                            NSLog("failure binding name: \(errmsg)")
-                            reject("-1", "failure binding name: \(errmsg)", nil)
-                            return
-                        }
-                    case is String:
-                        if sqlite3_bind_text(stmt, Int32(index + 1), (element as! NSString).utf8String, -1, nil) != SQLITE_OK {
-                            let errmsg = String(cString: sqlite3_errmsg(db)!)
-                            NSLog("failure binding name: \(errmsg)")
-                            reject("-1", "failure binding name: \(errmsg)", nil)
-                            return
-                        }
-                    case is NSInteger:
-                        if sqlite3_bind_int(stmt, Int32(index + 1), element as! Int32) != SQLITE_OK {
-                            let errmsg = String(cString: sqlite3_errmsg(db)!)
-                            NSLog("failure binding name: \(errmsg)")
-                            reject("-1", "failure binding name: \(errmsg)", nil)
-                            return
-                        }
-                    case is NSNumber:
-                        if sqlite3_bind_double(stmt, Int32(index + 1), element as! Double) != SQLITE_OK {
-                            let errmsg = String(cString: sqlite3_errmsg(db)!)
-                            NSLog("failure binding name: \(errmsg)")
-                            reject("-1", "failure binding name: \(errmsg)", nil)
-                            return
-                        }
-                    case is Bool:
-                        if sqlite3_bind_int(stmt, Int32(index + 1), (element as! Bool) ? 1 : 0) != SQLITE_OK {
-                            let errmsg = String(cString: sqlite3_errmsg(db)!)
-                            NSLog("failure binding name: \(errmsg)")
-                            reject("-1", "failure binding name: \(errmsg)", nil)
-                            return
-                        }
-                    default:
-                        NSLog("failure binding parameter with index: \(index)")
-                        reject("-1", "failure binding parameter with index: \(index)", nil)
-                        return
-                }
+            do {
+                try bindStatementParams(db: db, stmt: stmt, params: params)
+            } catch let error as ParameterBindError {
+                reject("-1", error.message, nil)
+                return
+            } catch {
+                reject("-1", "error: \(error)", nil)
+                return
             }
             
-            let result = NSMutableArray()
+            
+            let rows = NSMutableArray()
             while (sqlite3_step(stmt) == SQLITE_ROW) {
                 NSLog("Read row")
-                let row = NSMutableArray()
+                let row = NSMutableDictionary()
                 
                 NSLog("Iterate columns")
                 for i in 0..<sqlite3_column_count(stmt) {
-                    NSLog("Column with index \(i)")
-                    NSLog("Column of type \(sqlite3_column_type(stmt, i))")
+                    let columnName = String(cString: sqlite3_column_name(stmt, i))
+                    NSLog("Column with index \(i) of type \(sqlite3_column_type(stmt, i)) with name \(columnName)")
                     switch (sqlite3_column_type(stmt, i)) {
                         case SQLITE_NULL:
-                            row.add(NSNull())
+                            row[columnName] = NSNull()
                             break
                         case SQLITE_INTEGER:
-                            row.add(sqlite3_column_int(stmt, i) as Int32)
+                            row[columnName] = sqlite3_column_int(stmt, i) as Int32
                             break
                         case SQLITE_FLOAT:
-                            row.add(sqlite3_column_double(stmt, i) as Double)
+                            row[columnName] = sqlite3_column_double(stmt, i) as Double
                             break
                         case SQLITE3_TEXT:
-                            row.add(String(cString: sqlite3_column_text(stmt, i)))
+                            row[columnName] = String(cString: sqlite3_column_text(stmt, i))
                             break
                         case SQLITE_BLOB:
-                            row.add(NSNull())
+                            row[columnName] = NSNull()
                             break
                         default:
-                            row.add(NSNull())
+                            row[columnName] = NSNull()
                             break
                     }
                 }
                 
-                result.add(row)
+                rows.add(row)
             }
             
             sqlite3_finalize(stmt)
+            let lastInsertRowId = sqlite3_last_insert_rowid(db)
+            
+            let result = NSMutableDictionary()
+            result["rows"] = rows
+            if (lastInsertRowId > 0) {
+                result["last_insert_row_id"] = lastInsertRowId
+            } else {
+                result["last_insert_row_id"] = NSNull()
+            }
             
             resolve(result)
         }
     }
     
-    @objc(beginTransaction:withRejecter:)
-    func beginTransaction(resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) {
+    @objc(beginTransaction:withResolver:withRejecter:)
+    func beginTransaction(uid: String,
+                          resolve:RCTPromiseResolveBlock,
+                          reject:RCTPromiseRejectBlock) {
+        let db = RnSqlite.dbMap[uid]
         if (sqlite3_exec(db, "BEGIN TRANSACTION", nil, nil, nil) != SQLITE_OK) {
             NSLog("Transaction start failed")
             reject("-1", "Transaction start failed", nil)
@@ -127,8 +123,11 @@ class RnSqlite: NSObject {
         }
     }
     
-    @objc(commitTransaction:withRejecter:)
-    func commitTransaction(resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) {
+    @objc(commitTransaction:withResolver:withRejecter:)
+    func commitTransaction(uid: String,
+                           resolve:RCTPromiseResolveBlock,
+                           reject:RCTPromiseRejectBlock) {
+        let db = RnSqlite.dbMap[uid]
         if (sqlite3_exec(db, "COMMIT TRANSACTION", nil, nil, nil) != SQLITE_OK) {
             NSLog("Transaction start failed")
             reject("-1", "Transaction commit failed", nil)
@@ -138,8 +137,11 @@ class RnSqlite: NSObject {
         }
     }
     
-    @objc(rollbackTransaction:withRejecter:)
-    func rollbackTransaction(resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) {
+    @objc(rollbackTransaction:withResolver:withRejecter:)
+    func rollbackTransaction(uid: String,
+                             resolve:RCTPromiseResolveBlock,
+                             reject:RCTPromiseRejectBlock) {
+        let db = RnSqlite.dbMap[uid]
         if (sqlite3_exec(db, "ROLLBACK TRANSACTION", nil, nil, nil) != SQLITE_OK) {
             NSLog("Transaction rollback failed")
             reject("-1", "Transaction rollback failed", nil)
@@ -148,9 +150,50 @@ class RnSqlite: NSObject {
             resolve(nil)
         }
     }
+    
+    private func bindStatementParams(db: OpaquePointer?, stmt: OpaquePointer?, params: Array<AnyObject>) throws {
+        for (index, element) in params.enumerated() {
+            try bindStatementParameter(db: db, stmt: stmt, index: index, parameter: element)
+        }
+    }
+    
+    private func bindStatementParameter(db: OpaquePointer?, stmt: OpaquePointer?, index: Int, parameter: AnyObject) throws {
+        NSLog("parameter \(type(of: parameter))")
+            switch parameter
+            {
+                case is NSNull:
+                    if sqlite3_bind_null(stmt, Int32(index + 1)) != SQLITE_OK {
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        throw ParameterBindError(value: parameter, message:errmsg)
+                    }
+                case is String:
+                    if sqlite3_bind_text(stmt, Int32(index + 1), (parameter as! NSString).utf8String, -1, nil) != SQLITE_OK {
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        throw ParameterBindError(value: parameter, message:errmsg)
+                    }
+                case is NSInteger:
+                    if sqlite3_bind_int(stmt, Int32(index + 1), parameter as! Int32) != SQLITE_OK {
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        throw ParameterBindError(value: parameter, message:errmsg)
+                    }
+                case is NSNumber:
+                    if sqlite3_bind_double(stmt, Int32(index + 1), parameter as! Double) != SQLITE_OK {
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        throw ParameterBindError(value: parameter, message:errmsg)
+                    }
+                case is Bool:
+                    if sqlite3_bind_int(stmt, Int32(index + 1), (parameter as! Bool) ? 1 : 0) != SQLITE_OK {
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        throw ParameterBindError(value: parameter, message:errmsg)
+                    }
+                default:
+                    throw ParameterBindError(value: parameter, message: "Unexpected parameter type \(parameter)")
+            }
+    }
 }
 
 struct ParameterBindError: Error {
     let value: AnyObject
+    let message: String
 }
 

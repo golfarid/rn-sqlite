@@ -3,78 +3,111 @@ package com.rnsqlite
 import android.util.Log
 import com.facebook.react.bridge.*
 import java.lang.Exception
+import java.util.*
+import kotlin.collections.HashMap
 
 
+@Suppress("unused")
 class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
+    companion object{
+        val dbMap: HashMap<String, Database> = HashMap()
+    }
+
+
     override fun getName(): String {
         return "RnSqlite"
     }
 
     @ReactMethod
     fun openDatabase(name: String, promise: Promise) {
-      Database.createInstance(reactApplicationContext, name, 1 /* ToDo implement upgrade logic later */)
-      promise.resolve(null)
+        val uid: String = UUID.randomUUID().toString()
+        val database = Database(reactApplicationContext, name, 1 /* ToDo implement upgrade logic later */)
+        synchronized(dbMap) {
+            dbMap.put(uid, database)
+        }
+
+        promise.resolve(uid)
     }
 
     @ReactMethod
-    fun beginTransaction(promise: Promise) {
+    fun closeDatabase(uid: String) {
+      synchronized(dbMap) {
+        val database = dbMap.remove(uid)
+        database?.close();
+      }
+    }
+
+    @ReactMethod
+    fun beginTransaction(uid: String, promise: Promise) {
       Log.d("RnSqliteModule", "Begin transaction")
-      val db = Database.getInstance()
+      val db = dbMap[uid]
       db?.beginTransaction()
       promise.resolve(null)
     }
 
     @ReactMethod
-    fun commitTransaction(promise: Promise) {
+    fun commitTransaction(uid: String, promise: Promise) {
       Log.d("RnSqliteModule", "Commit transaction")
-      val db = Database.getInstance()
+      val db = dbMap[uid]
       db?.commitTransaction()
       promise.resolve(null)
     }
 
     @ReactMethod
-    fun endTransaction(promise: Promise) {
+    fun endTransaction(uid: String, promise: Promise) {
       Log.d("RnSqliteModule", "End transaction")
-      val db = Database.getInstance()
+      val db = dbMap[uid]
       db?.endTransaction()
       promise.resolve(null)
     }
 
     @ReactMethod
-    fun executeSql(sql: String, params: ReadableArray, promise: Promise) {
+    fun executeSql(uid: String, sql: String, params: ReadableArray, promise: Promise) {
       Log.d("RnSqliteModule", "Execute sql")
-      val db = Database.getInstance()
+      val db = dbMap[uid]
       val result = db?.executeSql(sql, jsArrayToJavaArray(params))
 
-      val rnResult = Arguments.createArray();
+      val rnRows = Arguments.createArray()
       val rowsIterator = result?.listIterator()
       if (rowsIterator != null) {
-        for (row in rowsIterator) {
-          val rnRow = Arguments.createArray();
+        for ((rowIndex, row) in rowsIterator.withIndex()) {
+          if (rowIndex > 0) {
+            val rnRow = Arguments.createMap()
 
-          val columnsIterator = row?.listIterator()
-          if (columnsIterator != null) {
-            for (value in columnsIterator) {
-              if (value == null) {
-                rnRow.pushNull()
-              } else {
-                when (value) {
-                  is Int -> rnRow.pushInt(value)
-                  is String -> rnRow.pushString(value)
-                  is Float -> rnRow.pushDouble(value.toDouble())
-                  is ByteArray -> rnRow.pushString(String(value, Charsets.UTF_8))
+            val columnsIterator: MutableListIterator<Any?>? = row?.listIterator()
+            if (columnsIterator != null) {
+              for ((columnIndex, value) in columnsIterator.withIndex()) {
+                val columnName = result[0]?.get(columnIndex).toString()
+
+                if (value == null) {
+                  rnRow.putNull(columnName)
+                } else {
+                  when (value) {
+                    is Int -> rnRow.putInt(columnName, value)
+                    is String -> rnRow.putString(columnName, value)
+                    is Float -> rnRow.putDouble(columnName, value.toDouble())
+                    is ByteArray -> rnRow.putString(columnName, String(value, Charsets.UTF_8))
+                  }
                 }
               }
+              rnRows.pushMap(rnRow)
             }
-            rnResult.pushArray(rnRow)
           }
         }
       }
 
+      val rnResult = Arguments.createMap()
+      rnResult.putArray("rows", rnRows)
+      val lastInsertRowId = db?.getLastInsertRowId()
+      if (lastInsertRowId != null && lastInsertRowId > 0) {
+        rnResult.putInt("last_insert_row_id", lastInsertRowId)
+      } else {
+        rnResult.putNull("last_insert_row_id")
+      }
       promise.resolve(rnResult)
     }
 
-    fun jsArrayToJavaArray(jsArray: ReadableArray?): Array<Any?> {
+    private fun jsArrayToJavaArray(jsArray: ReadableArray?): Array<Any?> {
       if (jsArray != null) {
         val javaArray = Array<Any?>(jsArray.size()) { null }
         (0 until jsArray.size()).forEach {
@@ -88,7 +121,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
           }
         }
 
-        return javaArray;
+        return javaArray
       }
 
       return Array(0) { null }
