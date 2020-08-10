@@ -1,3 +1,5 @@
+import type { ResultSet } from './result-set';
+
 const { RnSqlite } = NativeModules;
 
 import { NativeModules } from 'react-native';
@@ -8,7 +10,7 @@ export class SQLite {
     this.uid = uid;
   }
 
-  public async executeSql(sql: string, params: any[]): Promise<any> {
+  public async executeSql(sql: string, params: any[]): Promise<ResultSet> {
     return await RnSqlite.executeSql(this.uid, sql, params);
   }
 
