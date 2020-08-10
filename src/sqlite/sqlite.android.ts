@@ -1,10 +1,11 @@
-import type { ResultSet } from './result-set';
+import type { ResultSet } from './result.set';
 
 const { RnSqlite } = NativeModules;
 
 import { NativeModules } from 'react-native';
+import type { SqliteConnection } from './sqlite.connection';
 
-export class SQLite {
+export class SQLite implements SqliteConnection {
   private readonly uid: String;
   constructor(uid: String) {
     this.uid = uid;
@@ -14,7 +15,7 @@ export class SQLite {
     return await RnSqlite.executeSql(this.uid, sql, params);
   }
 
-  public async runInTransaction(runnable: () => void) {
+  public async runInTransaction(runnable: () => void): Promise<void> {
     try {
       await RnSqlite.beginTransaction(this.uid);
       await runnable();
@@ -24,7 +25,7 @@ export class SQLite {
     }
   }
 
-  public async close(): Promise<any> {
+  public async close(): Promise<void> {
     return await RnSqlite.closeDatabase(this.uid);
   }
 }
