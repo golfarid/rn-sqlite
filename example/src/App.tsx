@@ -35,8 +35,6 @@ export default function App() {
       setResult(queryLog);
     });
     await SQLite.close();
-
-
   };
 
   React.useEffect(() => {
