@@ -3,7 +3,7 @@ import type { ResultSet } from './result.set';
 const { RnSqlite } = NativeModules;
 
 import { NativeModules } from 'react-native';
-import type { SqliteConnection } from './sqlite.connection';
+import { SqliteConnection } from './sqlite.connection';
 
 export class SQLite implements SqliteConnection {
   private readonly uid: String;

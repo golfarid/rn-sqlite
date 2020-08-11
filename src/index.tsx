@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 import { SQLite } from './sqlite/sqlite';
-import type { SqliteConnection } from './sqlite/sqlite.connection';
+import { SqliteConnection } from './sqlite/sqlite.connection';
 
 const { RnSqlite } = NativeModules;
 
