@@ -2,7 +2,7 @@
 
 @interface RCT_EXTERN_MODULE(RnSqlite, NSObject)
 
-RCT_EXTERN_METHOD(openDatabase:(NSString)name
+RCT_EXTERN_METHOD(openDatabase:(NSString)path
                   withResolver:(RCTPromiseResolveBlock)resolve
                   withRejecter:(RCTPromiseRejectBlock)reject)
 

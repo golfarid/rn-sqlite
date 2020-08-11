@@ -9,15 +9,14 @@ class RnSqlite: NSObject {
     }
     
     @objc(openDatabase:withResolver:withRejecter:)
-    func openDatabase(name: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-        let filePath = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathExtension(name)
-        
+    func openDatabase(path: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
+        NSLog(path)
         var db: OpaquePointer?
-        if sqlite3_open(filePath.path, &db) != SQLITE_OK {
+        if sqlite3_open(path, &db) != SQLITE_OK {
             NSLog("There is error in creating DB")
             reject("-1", "Database open failed", nil)
         } else {
-            NSLog("Database has been created with path \(name)")
+            NSLog("Database has been created with path \(path)")
             let uid = NSUUID().uuidString
             RnSqlite.dbMap[uid] = db
             resolve(uid)

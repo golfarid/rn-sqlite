@@ -1,12 +1,27 @@
 import * as React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import { SQLiteModule } from 'rn-sqlite';
+
+import { LibraryDirectoryPath, mkdir, exists } from 'react-native-fs';
+import RNFetchBlob from 'rn-fetch-blob';
 
 export default function App() {
   const [result, setResult] = React.useState<string | undefined>();
 
   const dbTest = async () => {
-    const SQLite = await SQLiteModule.openDatabase('test');
+    const dirs = RNFetchBlob.fs.dirs;
+    let path: string;
+    if (Platform.OS === 'android') {
+      path = dirs.MainBundleDir + '/databases';
+    } else {
+      path = LibraryDirectoryPath + '/LocalDatabase';
+    }
+
+    if (!(await exists(path))) {
+      await mkdir(path);
+    }
+
+    const SQLite = await SQLiteModule.openDatabase(path + '/test.sqlite');
     await SQLite.runInTransaction(async () => {
       let queryLog: string;
       const rs = await SQLite.executeSql(
