@@ -4,6 +4,10 @@ import SQLite3
 class RnSqlite: NSObject {
     static var dbMap = [String : OpaquePointer]()
     
+    @objc static func requiresMainQueueSetup() -> Bool {
+        return false
+    }
+    
     @objc(openDatabase:withResolver:withRejecter:)
     func openDatabase(name: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
         let filePath = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false).appendingPathExtension(name)
