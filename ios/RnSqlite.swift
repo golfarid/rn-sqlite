@@ -16,7 +16,7 @@ class RnSqlite: NSObject {
             NSLog("There is error in creating DB")
             reject("-1", "Database open failed", nil)
         } else {
-            NSLog("Database has been created with path \(path)")
+            NSLog("Database has been opened with path \(path)")
             let uid = NSUUID().uuidString
             RnSqlite.dbMap[uid] = db
             resolve(uid)
@@ -169,26 +169,31 @@ class RnSqlite: NSObject {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
+                    break
                 case is String:
                     if sqlite3_bind_text(stmt, Int32(index + 1), (parameter as! NSString).utf8String, -1, nil) != SQLITE_OK {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
+                    break
                 case is NSInteger:
                     if sqlite3_bind_int(stmt, Int32(index + 1), parameter as! Int32) != SQLITE_OK {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
+                    break
                 case is NSNumber:
                     if sqlite3_bind_double(stmt, Int32(index + 1), parameter as! Double) != SQLITE_OK {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
+                    break
                 case is Bool:
                     if sqlite3_bind_int(stmt, Int32(index + 1), (parameter as! Bool) ? 1 : 0) != SQLITE_OK {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
+                    break
                 default:
                     throw ParameterBindError(value: parameter, message: "Unexpected parameter type \(parameter)")
             }
