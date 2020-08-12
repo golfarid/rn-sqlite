@@ -9,10 +9,13 @@ export default function App() {
     setResult('Inserting...');
     const SQLite = await SQLiteModule.openDatabase('/tmp/test.sqlite');
     await SQLite.runInTransaction(async () => {
+      console.time('insert');
       await SQLite.executeSql(
         'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, \n\tstring_field VARCHAR NOT NULL, \n\tint_field INTEGER\n)',
         []
       );
+
+      await SQLite.executeSql('DELETE FROM test', []);
 
       for (let i = 0; i < 10000; i++) {
         await SQLite.executeSql(
@@ -20,16 +23,19 @@ export default function App() {
           [i, `Some string ${i}`, i]
         );
       }
+      console.timeEnd('insert');
     });
 
     setResult('Insert finished');
 
     await SQLite.runInTransaction(async () => {
+      console.time('select');
       const result = await SQLite.executeSql(
         'SELECT id, bigint_field, string_field, int_field FROM test',
         []
       );
 
+      console.timeEnd('select');
       console.log(result);
     });
 
@@ -38,7 +44,6 @@ export default function App() {
   };
 
   React.useEffect(() => {
-    // RnSqlite.multiply(3, 7).then(setResult);
     dbTest()
       .then(() => console.info('query ok'))
       .catch(console.error);
