@@ -44,12 +44,14 @@ class RnSqlite: NSObject {
                     params: Array<AnyObject>,
                     resolve:RCTPromiseResolveBlock,
                     reject:RCTPromiseRejectBlock) -> Void {
+        let startTimestamp = NSDate().timeIntervalSince1970
+        
         var stmt: OpaquePointer?
         
         let db = RnSqlite.dbMap[uid]
         if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
-            NSLog("error preparing insert: \(errmsg)")
+//            NSLog("error preparing insert: \(errmsg)")
             reject("-1", "Query failed \(errmsg)", nil)
         } else {
             do {
@@ -65,7 +67,7 @@ class RnSqlite: NSObject {
             let rows = NSMutableArray()
             var columns = Array<String>()
             while (sqlite3_step(stmt) == SQLITE_ROW) {
-                NSLog("Read row")
+//                NSLog("Read row")
                 
                 if columns.count == 0 {
                     for i in 0..<sqlite3_column_count(stmt) {
@@ -75,10 +77,10 @@ class RnSqlite: NSObject {
                 
                 let row = NSMutableDictionary()
                 
-                NSLog("Iterate columns")
+//                NSLog("Iterate columns")
                 for i in 0..<columns.count {
                     let columnName = columns[i]
-                    NSLog("Column with index \(i) with name \(columnName)")
+//                    NSLog("Column with index \(i) with name \(columnName)")
                     switch (sqlite3_column_type(stmt, Int32(i))) {
                         case SQLITE_NULL:
                             row[columnName] = NSNull()
@@ -115,7 +117,11 @@ class RnSqlite: NSObject {
                 result["last_insert_row_id"] = NSNull()
             }
             
+            let queryTimestamp = NSDate().timeIntervalSince1970
+            NSLog("Query \(queryTimestamp - startTimestamp)")
             resolve(result)
+            let transportTimestamp = NSDate().timeIntervalSince1970
+            NSLog("Transport \(transportTimestamp - queryTimestamp)")
         }
     }
     

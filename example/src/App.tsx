@@ -6,35 +6,35 @@ export default function App() {
   const [result, setResult] = React.useState<string | undefined>();
 
   const dbTest = async () => {
+    setResult('Inserting...');
     const SQLite = await SQLiteModule.openDatabase('/tmp/test.sqlite');
     await SQLite.runInTransaction(async () => {
-      let queryLog: string;
-      const rs = await SQLite.executeSql(
-        "SELECT 1 as 'a', 'b' as 'b', ? as 'c', ? as 'd'",
-        [true, 'dwqw\\dqwd']
-      );
-      queryLog = JSON.stringify(rs);
-
-      const rs1 = await SQLite.executeSql(
-        'CREATE TABLE IF NOT EXISTS routes (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tdate BIGINT NOT NULL, \n\tguid VARCHAR NOT NULL, \n\tbegin_check_in_id INTEGER, \n\tend_check_in_id INTEGER\n)',
+      await SQLite.executeSql(
+        'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, \n\tstring_field VARCHAR NOT NULL, \n\tint_field INTEGER\n)',
         []
       );
-      queryLog += '\n' + JSON.stringify(rs1);
 
-      const rs2 = await SQLite.executeSql(
-        'INSERT INTO routes (date, guid, begin_check_in_id, end_check_in_id) VALUES (?, ?, ?, ?)',
-        [1, '1', 1, 1]
-      );
-      queryLog += '\n' + JSON.stringify(rs2);
-
-      const rs3 = await SQLite.executeSql(
-        'INSERT INTO routes (date, guid, begin_check_in_id, end_check_in_id) VALUES (?, ?, ?, ?)',
-        [2, '2', 2, 2]
-      );
-      queryLog += '\n' + JSON.stringify(rs3);
-      setResult(queryLog);
+      for (let i = 0; i < 10000; i++) {
+        await SQLite.executeSql(
+          'INSERT INTO test (bigint_field, string_field, int_field) VALUES (?, ?, ?)',
+          [i, `Some string ${i}`, i]
+        );
+      }
     });
+
+    setResult('Insert finished');
+
+    await SQLite.runInTransaction(async () => {
+      const result = await SQLite.executeSql(
+        'SELECT id, bigint_field, string_field, int_field FROM test',
+        []
+      );
+
+      console.log(result);
+    });
+
     await SQLite.close();
+    setResult('Query finished');
   };
 
   React.useEffect(() => {
