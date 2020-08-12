@@ -100,7 +100,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       rnResult.putArray("rows", rnRows)
       val lastInsertRowId = db?.getLastInsertRowId()
       if (lastInsertRowId != null && lastInsertRowId > 0) {
-        rnResult.putInt("last_insert_row_id", lastInsertRowId)
+        rnResult.putInt("last_insert_row_id", lastInsertRowId.toInt())
       } else {
         rnResult.putNull("last_insert_row_id")
       }
