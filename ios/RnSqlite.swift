@@ -62,28 +62,35 @@ class RnSqlite: NSObject {
                 return
             }
             
-            
             let rows = NSMutableArray()
+            var columns = Array<String>()
             while (sqlite3_step(stmt) == SQLITE_ROW) {
                 NSLog("Read row")
+                
+                if columns.count == 0 {
+                    for i in 0..<sqlite3_column_count(stmt) {
+                        columns.append(String(cString: sqlite3_column_name(stmt, i)))
+                    }
+                }
+                
                 let row = NSMutableDictionary()
                 
                 NSLog("Iterate columns")
-                for i in 0..<sqlite3_column_count(stmt) {
-                    let columnName = String(cString: sqlite3_column_name(stmt, i))
-                    NSLog("Column with index \(i) of type \(sqlite3_column_type(stmt, i)) with name \(columnName)")
-                    switch (sqlite3_column_type(stmt, i)) {
+                for i in 0..<columns.count {
+                    let columnName = columns[i]
+                    NSLog("Column with index \(i) with name \(columnName)")
+                    switch (sqlite3_column_type(stmt, Int32(i))) {
                         case SQLITE_NULL:
                             row[columnName] = NSNull()
                             break
                         case SQLITE_INTEGER:
-                            row[columnName] = sqlite3_column_int(stmt, i) as Int32
+                            row[columnName] = sqlite3_column_int(stmt, Int32(i)) as Int32
                             break
                         case SQLITE_FLOAT:
-                            row[columnName] = sqlite3_column_double(stmt, i) as Double
+                            row[columnName] = sqlite3_column_double(stmt, Int32(i)) as Double
                             break
                         case SQLITE3_TEXT:
-                            row[columnName] = String(cString: sqlite3_column_text(stmt, i))
+                            row[columnName] = String(cString: sqlite3_column_text(stmt, Int32(i)))
                             break
                         case SQLITE_BLOB:
                             row[columnName] = NSNull()
