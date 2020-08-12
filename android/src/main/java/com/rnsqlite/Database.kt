@@ -36,8 +36,8 @@ class Database(context: Context, name: String, version: Int) :
           (0 until cursor.columnCount).forEach {
             when (cursor.getType(it)) {
               FIELD_TYPE_NULL -> row.add(null)
-              FIELD_TYPE_INTEGER -> row.add(cursor.getInt(it))
-              FIELD_TYPE_FLOAT -> row.add(cursor.getFloat(it))
+              FIELD_TYPE_INTEGER -> row.add(cursor.getLong(it))
+              FIELD_TYPE_FLOAT -> row.add(cursor.getDouble(it))
               FIELD_TYPE_STRING -> row.add(cursor.getString(it))
               FIELD_TYPE_BLOB -> row.add(cursor.getBlob(it))
               else -> {

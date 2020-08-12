@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import { SQLiteModule } from 'rn-sqlite';
 
 export default function App() {
@@ -7,15 +7,17 @@ export default function App() {
 
   const dbTest = async () => {
     setResult('Inserting...');
-    const SQLite = await SQLiteModule.openDatabase('/tmp/test.sqlite');
+    const SQLite = await SQLiteModule.openDatabase(
+      Platform.OS === 'ios' ? '/tmp/test.sqlite' : 'test.sqlite'
+    );
     await SQLite.runInTransaction(async () => {
-      console.time('insert');
+      // console.time('insert');
       await SQLite.executeSql(
         'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, \n\tstring_field VARCHAR NOT NULL, \n\tint_field INTEGER\n)',
         []
       );
 
-      await SQLite.executeSql('DELETE FROM test', []);
+      await SQLite.executeSql('DELETE FROM test WHERE 1', []);
 
       for (let i = 0; i < 10000; i++) {
         await SQLite.executeSql(
@@ -23,20 +25,19 @@ export default function App() {
           [i, `Some string ${i}`, i]
         );
       }
-      console.timeEnd('insert');
+      // console.timeEnd('insert');
     });
 
     setResult('Insert finished');
 
     await SQLite.runInTransaction(async () => {
-      console.time('select');
-      const result = await SQLite.executeSql(
+      // console.time('select');
+      await SQLite.executeSql(
         'SELECT id, bigint_field, string_field, int_field FROM test',
         []
       );
 
-      console.timeEnd('select');
-      console.log(result);
+      // console.timeEnd('select');
     });
 
     await SQLite.close();

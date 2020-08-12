@@ -1,4 +1,4 @@
-import type { ResultSet } from './result.set';
+import { ResultSet } from './result.set';
 
 const { RnSqlite } = NativeModules;
 
