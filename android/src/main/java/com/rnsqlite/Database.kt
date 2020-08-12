@@ -23,7 +23,6 @@ class Database(context: Context, name: String, version: Int) :
     try {
       cursor = db.rawQuery(sql, escapeParams(params))
       val result = MutableList<MutableList<Any?>?>(0) { null }
-
       if (cursor.moveToFirst()) {
         val header = MutableList<Any?>(0) {null}
         (0 until cursor.columnCount).forEach {
@@ -54,20 +53,20 @@ class Database(context: Context, name: String, version: Int) :
     }
   }
 
-  fun getLastInsertRowId(): Long? {
+  fun getLastInsertRowId(): Int? {
     var cursor: Cursor? = null
     try {
       cursor = db.rawQuery("SELECT last_insert_rowid()", Array<String?>(0){null})
       if (cursor.moveToFirst()) {
-        if (cursor.columnCount > 0 &&
-            cursor.getType(0) == FIELD_TYPE_INTEGER)
-          return cursor.getLong(0)
+        if (cursor.columnCount > 0 && cursor.getType(0) == FIELD_TYPE_INTEGER)
+          return cursor.getInt(0)
       }
-
-      return 0
-    } finally {
+    }
+    finally {
       cursor?.close()
     }
+
+    return 0
   }
 
   fun beginTransaction() {
@@ -85,9 +84,21 @@ class Database(context: Context, name: String, version: Int) :
   private fun escapeParams(params: Array<Any?>): Array<String> {
     val strArray = Array(params.size) {""}
     (params.indices).forEach {
-      strArray[it] = DatabaseUtils.escapeString(DatabaseUtils.objectToSqlString(params[it]))
+      var strParam = DatabaseUtils.objectToSqlString(params[it]);
+      if (params[it] is String)
+        strParam = DatabaseUtils.escapeString(strParam)
+
+      strArray[it] = DatabaseUtils.objectToSqlString(strParam)
     }
 
     return strArray
+  }
+
+  override fun close() {
+    if (this.db.isOpen) {
+      this.db.close();
+    }
+
+    super.close()
   }
 }

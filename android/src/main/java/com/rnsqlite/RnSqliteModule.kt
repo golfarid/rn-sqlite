@@ -100,7 +100,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       rnResult.putArray("rows", rnRows)
       val lastInsertRowId = db?.getLastInsertRowId()
       if (lastInsertRowId != null && lastInsertRowId > 0) {
-        rnResult.putInt("last_insert_row_id", lastInsertRowId.toInt())
+        rnResult.putInt("last_insert_row_id", lastInsertRowId)
       } else {
         rnResult.putNull("last_insert_row_id")
       }
@@ -114,7 +114,13 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
           when (jsArray.getType(it)) {
             ReadableType.Null -> javaArray[it] = null
             ReadableType.Boolean -> javaArray[it] = jsArray.getBoolean(it)
-            ReadableType.Number -> javaArray[it] = jsArray.getDouble(it)
+            ReadableType.Number -> {
+              val value = jsArray.getDouble(it)
+              if (value.compareTo(value.toInt()) != 0)
+                javaArray[it] = jsArray.getDouble(it)
+              else
+                javaArray[it] = jsArray.getInt(it)
+            }
             ReadableType.String -> javaArray[it] = jsArray.getString(it)
             ReadableType.Array -> javaArray[it] = jsArrayToJavaArray(jsArray.getArray(it))
             ReadableType.Map -> throw Exception("ReadableType.Map unsupported yet")
