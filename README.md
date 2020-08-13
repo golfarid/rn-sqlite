@@ -1,6 +1,6 @@
 # rn-sqlite
 
-&#39;Simple sqlite native wrapper&#39;
+Simple react-native wrapper around native sqlite  with transaction support
 
 ## Installation
 
@@ -14,32 +14,35 @@ npm install rn-sqlite https://github.com/golfarid/rn-sqlite.git
 import RnSqlite from "rn-sqlite";
 
 // ...
-const SQLite = await SQLiteModule.openDatabase('test');
-  await SQLite.runInTransaction(async () => {
-    const firstResultSet = await SQLite.executeSql(
-      "SELECT 1 as 'a', 'b' as 'b', ? as 'c', ? as 'd'",
-      [true, 'some text']
+
+const SQLite = await SQLiteModule.openDatabase(
+    Platform.OS === 'ios' ? '/tmp/test.sqlite' : 'test.sqlite'
+);
+
+await SQLite.runInTransaction(async () => {
+    await SQLite.executeSql(
+        'CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, bigint_field BIGINT NOT NULL, string_field VARCHAR NOT NULL, int_field INTEGER)',
+        []
     );
 
-    const secondResultSet = await SQLite.executeSql(
-      'CREATE TABLE IF NOT EXISTS test_table (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tdate BIGINT NOT NULL, \n\tguid VARCHAR NOT NULL, \n\tsome_num INTEGER, \n\tanother_some_num INTEGER\n)',
-      []
+    await SQLite.executeSql('DELETE FROM test WHERE 1', []);
+
+    for (let i = 0; i < 10000; i++) {
+        await SQLite.executeSql(
+            'INSERT INTO test (bigint_field, string_field, int_field) VALUES (?, ?, ?)',
+            [i, `Test string ${i}`, i]
+        );
+    }
+});
+    
+await SQLite.runInTransaction(async () => {
+    await SQLite.executeSql(
+        'SELECT id, bigint_field, string_field, int_field FROM test',
+        []
     );
+});
 
-    const thirdResultSet = await SQLite.executeSql(
-      'INSERT INTO test_table (date, guid, some_num, another_some_num) VALUES (?, ?, ?, ?)',
-      [1, '1', 1, 1]
-    );
-
-    const fourthResultSet = await SQLite.executeSql(
-      'INSERT INTO test_table (date, guid, some_num, another_some_num) VALUES (?, ?, ?, ?)',
-      [2, '2', 2, 2]
-    );
-
-  });
-
-  await SQLite.close();
-};
+await SQLite.close();
 
 // ...
 
