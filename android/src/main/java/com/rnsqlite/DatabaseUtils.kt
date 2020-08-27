@@ -3,7 +3,7 @@ package com.rnsqlite
 object DatabaseUtils {
   fun objectToSqlString(value: Any?): String {
     return if (value == null) {
-      "NULL";
+      "NULL"
     } else if (value is Double || value is Float) {
       value.toString()
     } else if (value is Number) {

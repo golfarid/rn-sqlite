@@ -83,9 +83,9 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                   rnRow.putNull(columnName)
                 } else {
                   when (value) {
-                    is Int -> rnRow.putInt(columnName, value)
+                    is Long -> rnRow.putInt(columnName, value.toInt())
                     is String -> rnRow.putString(columnName, value)
-                    is Float -> rnRow.putDouble(columnName, value.toDouble())
+                    is Double -> rnRow.putDouble(columnName, value)
                     is ByteArray -> rnRow.putString(columnName, String(value, Charsets.UTF_8))
                   }
                 }

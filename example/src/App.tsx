@@ -13,16 +13,17 @@ export default function App() {
     await SQLite.runInTransaction(async () => {
       // console.time('insert');
       await SQLite.executeSql(
-        'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, \n\tstring_field VARCHAR NOT NULL, \n\tint_field INTEGER\n)',
+        'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, ' +
+          '\n\tstring_field VARCHAR NOT NULL, \n\tdouble_field FLOAT NOT NULL, \n\tnull_field VARCHAR\n)',
         []
       );
 
       await SQLite.executeSql('DELETE FROM test WHERE 1', []);
 
-      for (let i = 0; i < 10000; i++) {
+      for (let i = 0; i < 100; i++) {
         await SQLite.executeSql(
-          'INSERT INTO test (bigint_field, string_field, int_field) VALUES (?, ?, ?)',
-          [i, `Some string ${i}`, i]
+          'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
+          [i, `Some string ${i}`, i * 1.1, null]
         );
       }
       // console.timeEnd('insert');
@@ -32,12 +33,12 @@ export default function App() {
 
     await SQLite.runInTransaction(async () => {
       // console.time('select');
-      await SQLite.executeSql(
-        'SELECT id, bigint_field, string_field, int_field FROM test',
+      const resultSet = await SQLite.executeSql(
+        'SELECT id, bigint_field, string_field, double_field, null_field FROM test',
         []
       );
 
-      // console.timeEnd('select');
+      console.table(resultSet.rows);
     });
 
     await SQLite.close();
