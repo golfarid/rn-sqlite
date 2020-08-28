@@ -23,7 +23,7 @@ export default function App() {
       for (let i = 0; i < 100; i++) {
         await SQLite.executeSql(
           'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
-          [i, `Some string ${i}`, i * 1.1, null]
+          [i, `Some \? string ${i}`, i * 1.1, null]
         );
       }
       // console.timeEnd('insert');

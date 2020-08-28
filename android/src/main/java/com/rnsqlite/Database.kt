@@ -83,38 +83,40 @@ class Database(context: Context, name: String, version: Int) :
   }
 
   private fun buildQuery(sql: String, params: Array<Any?>): String {
+    val parametersRegexp = Regex("(\"([^]\"]*)\"|'([^']*)'|\\[([^\\[]*)\\])|(\\?)")
+
     var bindSql = sql
     (params.indices).forEach {
       val value = params[it]
-      if (value == null) {
-        bindSql = bindSql.replaceFirst("?", "NULL")
-      } else if (value is Double || value is Float) {
-        bindSql = bindSql.replaceFirst("?", value.toString())
-      } else if (value is Number) {
-        bindSql = bindSql.replaceFirst("?", value.toString())
-      } else if (value is Boolean) {
-        bindSql = bindSql.replaceFirst("?", if (value) "1" else "0")
-      } else if (value is ByteArray) {
-        bindSql = bindSql.replaceFirst("?", String(value, Charsets.UTF_8))
-      } else {
-        bindSql = bindSql.replaceFirst("?", DatabaseUtils.escapeString(value.toString()))
+
+      val matchResults = parametersRegexp.findAll(bindSql)
+      var placeholderIndex: Int? = null
+      for (matchResult in matchResults) {
+        placeholderIndex = matchResult.groups[5]?.range?.first
+        if (placeholderIndex != null) break
+      }
+
+      if (placeholderIndex != null) {
+        val sqlValue = if (value == null) {
+          "NULL"
+        } else if (value is Double || value is Float) {
+          value.toString()
+        } else if (value is Number) {
+          value.toString()
+        } else if (value is Boolean) {
+          if (value) "1" else "0"
+        } else if (value is ByteArray) {
+          String(value, Charsets.UTF_8)
+        } else {
+          DatabaseUtils.escapeString(value.toString())
+        }
+
+        bindSql = bindSql.substring(0, placeholderIndex) + sqlValue + bindSql.substring(placeholderIndex + 1)
       }
     }
 
+    Log.i("Database", bindSql)
     return bindSql
-  }
-
-  private fun escapeParams(params: Array<Any?>): Array<String> {
-    val strArray = Array(params.size) {""}
-    (params.indices).forEach {
-      var strParam = DatabaseUtils.objectToSqlString(params[it])
-//      if (params[it] is String)
-//        strParam = DatabaseUtils.escapeString(strParam)
-
-      strArray[it] = strParam
-    }
-
-    return strArray
   }
 
   override fun close() {
