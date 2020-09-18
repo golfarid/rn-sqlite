@@ -10,9 +10,16 @@ class RnSqlite: NSObject {
     
     @objc(openDatabase:withResolver:withRejecter:)
     func openDatabase(path: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-        NSLog(path)
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        let documentsDirectory = paths[0]
+        let dbPath = documentsDirectory
+            .appendingPathComponent("..")
+            .appendingPathComponent("Library")
+            .appendingPathComponent(path)
+        
+        NSLog(dbPath.absoluteString)
         var db: OpaquePointer?
-        if sqlite3_open(path, &db) != SQLITE_OK {
+        if sqlite3_open(dbPath.absoluteString, &db) != SQLITE_OK {
             reject("-1", "Database open failed", nil)
         } else {
             let uid = NSUUID().uuidString
@@ -75,7 +82,7 @@ class RnSqlite: NSObject {
                             row[columnName] = NSNull()
                             break
                         case SQLITE_INTEGER:
-                            row[columnName] = sqlite3_column_int(stmt, Int32(i))
+                            row[columnName] = sqlite3_column_int64(stmt, Int32(i))
                             break
                         case SQLITE_FLOAT:
                             row[columnName] = sqlite3_column_double(stmt, Int32(i))
@@ -171,24 +178,14 @@ class RnSqlite: NSObject {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
-                case is NSNumber:
-                    let numParam = parameter as! CFNumber;
-                    switch CFNumberGetType(numParam) {
-                        case .float32Type, .floatType, .float64Type, .doubleType:
-                            let doubleParam = parameter as! NSNumber
-                            if sqlite3_bind_double(stmt, Int32(index + 1), doubleParam.doubleValue) != SQLITE_OK {
-                                let errmsg = String(cString: sqlite3_errmsg(db)!)
-                                throw ParameterBindError(value: parameter, message:errmsg)
-                            }
-                        default:
-                            let integerParam = parameter as! NSNumber
-                            if sqlite3_bind_int(stmt, Int32(index + 1), integerParam.int32Value) != SQLITE_OK {
-                                let errmsg = String(cString: sqlite3_errmsg(db)!)
-                                throw ParameterBindError(value: parameter, message:errmsg)
-                            }
-                    }
                 case is NSInteger:
-                    if sqlite3_bind_int(stmt, Int32(index + 1), parameter as! Int32) != SQLITE_OK {
+                    NSLog("Parameter %lld", parameter as! NSInteger)
+                    if sqlite3_bind_int64(stmt, Int32(index + 1), Int64((parameter as! NSInteger))) != SQLITE_OK {
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        throw ParameterBindError(value: parameter, message:errmsg)
+                    }
+                case is NSNumber:
+                    if sqlite3_bind_double(stmt, Int32(index + 1), (parameter as! NSNumber).doubleValue) != SQLITE_OK {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }

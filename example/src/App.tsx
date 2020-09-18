@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, View, Text, Platform } from 'react-native';
+import { StyleSheet, View, Text } from 'react-native';
 import { SQLiteModule } from 'rn-sqlite';
 
 export default function App() {
@@ -7,9 +7,7 @@ export default function App() {
 
   const dbTest = async () => {
     setResult('Inserting...');
-    const SQLite = await SQLiteModule.openDatabase(
-      Platform.OS === 'ios' ? '/tmp/test.sqlite' : 'test.sqlite'
-    );
+    const SQLite = await SQLiteModule.openDatabase('test.sqlite');
     await SQLite.runInTransaction(async () => {
       // console.time('insert');
       await SQLite.executeSql(
@@ -23,7 +21,7 @@ export default function App() {
       for (let i = 0; i < 100; i++) {
         await SQLite.executeSql(
           'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
-          [i, `Some \? string ${i}`, i * 1.1, null]
+          [1600214400000, `Some \? string ${i}`, i * 1.1, null]
         );
       }
       // console.timeEnd('insert');
