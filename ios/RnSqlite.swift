@@ -175,12 +175,14 @@ class RnSqlite: NSObject {
                     let numParam = parameter as! CFNumber;
                     switch CFNumberGetType(numParam) {
                         case .float32Type, .floatType, .float64Type, .doubleType:
-                            if sqlite3_bind_double(stmt, Int32(index + 1), parameter as! Double) != SQLITE_OK {
+                            let doubleParam = parameter as! NSNumber
+                            if sqlite3_bind_double(stmt, Int32(index + 1), doubleParam.doubleValue) != SQLITE_OK {
                                 let errmsg = String(cString: sqlite3_errmsg(db)!)
                                 throw ParameterBindError(value: parameter, message:errmsg)
                             }
                         default:
-                            if sqlite3_bind_int(stmt, Int32(index + 1), parameter as! Int32) != SQLITE_OK {
+                            let integerParam = parameter as! NSNumber
+                            if sqlite3_bind_int(stmt, Int32(index + 1), integerParam.int32Value) != SQLITE_OK {
                                 let errmsg = String(cString: sqlite3_errmsg(db)!)
                                 throw ParameterBindError(value: parameter, message:errmsg)
                             }
