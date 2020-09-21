@@ -3,11 +3,11 @@ import SQLite3
 @objc(RnSqlite)
 class RnSqlite: NSObject {
     static var dbMap = [String : OpaquePointer]()
-    
+
     @objc static func requiresMainQueueSetup() -> Bool {
         return false
     }
-    
+
     @objc(openDatabase:withResolver:withRejecter:)
     func openDatabase(path: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
@@ -16,7 +16,7 @@ class RnSqlite: NSObject {
             .appendingPathComponent("..")
             .appendingPathComponent("Library")
             .appendingPathComponent(path)
-        
+
         NSLog(dbPath.absoluteString)
         var db: OpaquePointer?
         if sqlite3_open(dbPath.absoluteString, &db) != SQLITE_OK {
@@ -27,20 +27,18 @@ class RnSqlite: NSObject {
             resolve(uid)
         }
     }
-    
+
     @objc(closeDatabase:withResolver:withRejecter:)
     func closeDatabase(uid: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
         let db = RnSqlite.dbMap[uid]
         if sqlite3_close(db) != SQLITE_OK {
-            reject("-1", "Database open failed", nil)
+            reject("-1", "Database close failed", nil)
         } else {
-            let db = RnSqlite.dbMap[uid]
-            sqlite3_close(db)
             RnSqlite.dbMap.removeValue(forKey: uid)
             resolve(nil)
         }
     }
-    
+
     @objc(executeSql:withSql:withParams:withResolver:withRejecter:)
     func executeSql(uid: String,
                     sql: String,
@@ -48,7 +46,7 @@ class RnSqlite: NSObject {
                     resolve:RCTPromiseResolveBlock,
                     reject:RCTPromiseRejectBlock) -> Void {
         var stmt: OpaquePointer?
-        
+
         let db = RnSqlite.dbMap[uid]
         if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
@@ -63,7 +61,7 @@ class RnSqlite: NSObject {
                 reject("-1", "error: \(error)", nil)
                 return
             }
-            
+
             let rows = NSMutableArray()
             var columns = Array<String>()
             while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -72,9 +70,9 @@ class RnSqlite: NSObject {
                         columns.append(String(cString: sqlite3_column_name(stmt, i)))
                     }
                 }
-                
+
                 let row = NSMutableDictionary()
-                
+
                 for i in 0..<columns.count {
                     let columnName = columns[i]
                     switch (sqlite3_column_type(stmt, Int32(i))) {
@@ -98,13 +96,13 @@ class RnSqlite: NSObject {
                             break
                     }
                 }
-                
+
                 rows.add(row)
             }
-            
+
             sqlite3_finalize(stmt)
             let lastInsertRowId = sqlite3_last_insert_rowid(db)
-            
+
             let result = NSMutableDictionary()
             result["rows"] = rows
             if (lastInsertRowId > 0) {
@@ -112,11 +110,11 @@ class RnSqlite: NSObject {
             } else {
                 result["last_insert_row_id"] = NSNull()
             }
-            
+
             resolve(result)
         }
     }
-    
+
     @objc(beginTransaction:withResolver:withRejecter:)
     func beginTransaction(uid: String,
                           resolve:RCTPromiseResolveBlock,
@@ -130,7 +128,7 @@ class RnSqlite: NSObject {
             resolve(nil)
         }
     }
-    
+
     @objc(commitTransaction:withResolver:withRejecter:)
     func commitTransaction(uid: String,
                            resolve:RCTPromiseResolveBlock,
@@ -144,7 +142,7 @@ class RnSqlite: NSObject {
             resolve(nil)
         }
     }
-    
+
     @objc(rollbackTransaction:withResolver:withRejecter:)
     func rollbackTransaction(uid: String,
                              resolve:RCTPromiseResolveBlock,
@@ -158,13 +156,13 @@ class RnSqlite: NSObject {
             resolve(nil)
         }
     }
-    
+
     private func bindStatementParams(db: OpaquePointer?, stmt: OpaquePointer?, params: Array<AnyObject>) throws {
         for (index, element) in params.enumerated() {
             try bindStatementParameter(db: db, stmt: stmt, index: index, parameter: element)
         }
     }
-    
+
     private func bindStatementParameter(db: OpaquePointer?, stmt: OpaquePointer?, index: Int, parameter: AnyObject) throws {
             switch parameter
             {
@@ -179,7 +177,6 @@ class RnSqlite: NSObject {
                         throw ParameterBindError(value: parameter, message:errmsg)
                     }
                 case is NSInteger:
-                    NSLog("Parameter %lld", parameter as! NSInteger)
                     if sqlite3_bind_int64(stmt, Int32(index + 1), Int64((parameter as! NSInteger))) != SQLITE_OK {
                         let errmsg = String(cString: sqlite3_errmsg(db)!)
                         throw ParameterBindError(value: parameter, message:errmsg)

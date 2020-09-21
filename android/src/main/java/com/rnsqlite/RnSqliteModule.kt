@@ -22,19 +22,14 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun openDatabase(name: String, promise: Promise) {
         val uid: String = UUID.randomUUID().toString()
         val database = Database(reactApplicationContext, name, 1 /* ToDo implement upgrade logic later */)
-        synchronized(dbMap) {
-            dbMap.put(uid, database)
-        }
-
+        dbMap.put(uid, database)
         promise.resolve(uid)
     }
 
     @ReactMethod
     fun closeDatabase(uid: String) {
-      synchronized(dbMap) {
-        val database = dbMap.remove(uid)
-        database?.close();
-      }
+      val database = dbMap.remove(uid)
+      database?.close()
     }
 
     @ReactMethod
@@ -83,7 +78,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                   rnRow.putNull(columnName)
                 } else {
                   when (value) {
-                    is Long -> rnRow.putInt(columnName, value.toInt())
+                    is Long -> rnRow.putDouble(columnName, value.toDouble())
                     is String -> rnRow.putString(columnName, value)
                     is Double -> rnRow.putDouble(columnName, value)
                     is ByteArray -> rnRow.putString(columnName, String(value, Charsets.UTF_8))
@@ -100,7 +95,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       rnResult.putArray("rows", rnRows)
       val lastInsertRowId = db?.getLastInsertRowId()
       if (lastInsertRowId != null && lastInsertRowId > 0) {
-        rnResult.putInt("last_insert_row_id", lastInsertRowId)
+        rnResult.putDouble("last_insert_row_id", lastInsertRowId.toDouble())
       } else {
         rnResult.putNull("last_insert_row_id")
       }
@@ -114,13 +109,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
           when (jsArray.getType(it)) {
             ReadableType.Null -> javaArray[it] = null
             ReadableType.Boolean -> javaArray[it] = jsArray.getBoolean(it)
-            ReadableType.Number -> {
-              val value = jsArray.getDouble(it)
-              if (value.compareTo(value.toInt()) != 0)
-                javaArray[it] = jsArray.getDouble(it)
-              else
-                javaArray[it] = jsArray.getInt(it)
-            }
+            ReadableType.Number -> javaArray[it] = jsArray.getDouble(it)
             ReadableType.String -> javaArray[it] = jsArray.getString(it)
             ReadableType.Array -> javaArray[it] = jsArrayToJavaArray(jsArray.getArray(it))
             ReadableType.Map -> throw Exception("ReadableType.Map unsupported yet")

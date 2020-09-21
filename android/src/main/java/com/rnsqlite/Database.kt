@@ -6,6 +6,7 @@ import android.database.Cursor.*
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import java.math.BigDecimal
 
 class Database(context: Context, name: String, version: Int) :
   SQLiteOpenHelper(context, name, null, version) {
@@ -54,13 +55,13 @@ class Database(context: Context, name: String, version: Int) :
     }
   }
 
-  fun getLastInsertRowId(): Int? {
+  fun getLastInsertRowId(): Long? {
     var cursor: Cursor? = null
     try {
       cursor = db.rawQuery("SELECT last_insert_rowid()", Array<String?>(0){null})
       if (cursor.moveToFirst()) {
         if (cursor.columnCount > 0 && cursor.getType(0) == FIELD_TYPE_INTEGER)
-          return cursor.getInt(0)
+          return cursor.getLong(0)
       }
     }
     finally {
@@ -99,10 +100,8 @@ class Database(context: Context, name: String, version: Int) :
       if (placeholderIndex != null) {
         val sqlValue = if (value == null) {
           "NULL"
-        } else if (value is Double || value is Float) {
-          value.toString()
-        } else if (value is Number) {
-          value.toString()
+        } else if (value is Double) {
+          BigDecimal(value).toPlainString()
         } else if (value is Boolean) {
           if (value) "1" else "0"
         } else if (value is ByteArray) {
