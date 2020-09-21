@@ -22,7 +22,8 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     fun openDatabase(name: String, promise: Promise) {
         val uid: String = UUID.randomUUID().toString()
         val database = Database(reactApplicationContext, name, 1 /* ToDo implement upgrade logic later */)
-        dbMap.put(uid, database)
+        database.setWriteAheadLoggingEnabled(true)
+      dbMap[uid] = database
         promise.resolve(uid)
     }
 
