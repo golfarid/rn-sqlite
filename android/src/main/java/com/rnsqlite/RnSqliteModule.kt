@@ -58,7 +58,6 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     @ReactMethod
     fun executeSql(uid: String, sql: String, params: ReadableArray, promise: Promise) {
-      Log.d("RnSqliteModule", "Execute sql")
       val db = dbMap[uid]
       val result = db?.executeSql(sql, jsArrayToJavaArray(params))
 

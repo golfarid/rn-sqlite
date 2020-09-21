@@ -5,7 +5,6 @@ import android.database.Cursor
 import android.database.Cursor.*
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import java.math.BigDecimal
 
 class Database(context: Context, name: String, version: Int) :
@@ -114,7 +113,6 @@ class Database(context: Context, name: String, version: Int) :
       }
     }
 
-    Log.i("Database", bindSql)
     return bindSql
   }
 
