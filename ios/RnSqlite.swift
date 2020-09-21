@@ -22,9 +22,13 @@ class RnSqlite: NSObject {
         if sqlite3_open(dbPath.absoluteString, &db) != SQLITE_OK {
             reject("-1", "Database open failed", nil)
         } else {
-            let uid = NSUUID().uuidString
-            RnSqlite.dbMap[uid] = db
-            resolve(uid)
+            if sqlite3_busy_timeout(db, 30000) != SQLITE_OK {
+                reject("-1", "Database busy timeout setup failed", nil)
+            } else {
+                let uid = NSUUID().uuidString
+                RnSqlite.dbMap[uid] = db
+                resolve(uid)
+            }
         }
     }
 

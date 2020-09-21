@@ -45,7 +45,10 @@ export default function App() {
 
   React.useEffect(() => {
     dbTest()
-      .then(() => console.info('query ok'))
+      .then(() => console.log('query one ok'))
+      .catch(console.error);
+    dbTest()
+      .then(() => console.log('query two ok'))
       .catch(console.error);
   }, []);
 
