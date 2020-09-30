@@ -23,7 +23,6 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       promise.resolve(name)
     } else {
       val database = Database(reactApplicationContext, name, 1 /* ToDo implement upgrade logic later */)
-      database.setWriteAheadLoggingEnabled(true)
       dbMap[name] = database
       promise.resolve(name)
     }

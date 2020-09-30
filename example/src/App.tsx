@@ -28,6 +28,12 @@ export default function App() {
       // console.timeEnd('insert');
     });
 
+    const resultSet = await connection.executeSql(
+      'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
+      [1600214400000, `Some \? string ${100}`, 100 * 1.1, null]
+    );
+    console.log(resultSet);
+
     setResult('Insert finished');
 
     await connection.runInTransaction(async () => {
