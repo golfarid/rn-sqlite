@@ -54,20 +54,20 @@ class Database(context: Context, name: String, version: Int) :
     }
   }
 
-  fun getLastInsertRowId(): Long? {
+  fun getLastInsertRowId(): Double? {
     var cursor: Cursor? = null
     try {
       cursor = db.rawQuery("SELECT last_insert_rowid()", Array<String?>(0){null})
       if (cursor.moveToFirst()) {
         if (cursor.columnCount > 0 && cursor.getType(0) == FIELD_TYPE_INTEGER)
-          return cursor.getLong(0)
+          return cursor.getDouble(0)
       }
     }
     finally {
       cursor?.close()
     }
 
-    return 0
+    return null
   }
 
   fun beginTransaction() {

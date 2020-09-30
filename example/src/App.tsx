@@ -1,37 +1,38 @@
 import * as React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { SQLiteModule } from 'rn-sqlite';
+import { SqliteConnection } from '../../src/sqlite/sqlite.connection';
 
 export default function App() {
   const [result, setResult] = React.useState<string | undefined>();
 
-  const dbTest = async () => {
+  const dbTest = async (connection: SqliteConnection) => {
     setResult('Inserting...');
-    const SQLite = await SQLiteModule.openDatabase('test.sqlite');
-    await SQLite.runInTransaction(async () => {
+    await connection.runInTransaction(async () => {
       // console.time('insert');
-      await SQLite.executeSql(
+      await connection.executeSql(
         'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, ' +
           '\n\tstring_field VARCHAR NOT NULL, \n\tdouble_field FLOAT NOT NULL, \n\tnull_field VARCHAR\n)',
         []
       );
 
-      await SQLite.executeSql('DELETE FROM test WHERE 1', []);
+      await connection.executeSql('DELETE FROM test WHERE 1', []);
 
       for (let i = 0; i < 100; i++) {
-        await SQLite.executeSql(
+        const resultSet = await connection.executeSql(
           'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
           [1600214400000, `Some \? string ${i}`, i * 1.1, null]
         );
+        console.log(resultSet);
       }
       // console.timeEnd('insert');
     });
 
     setResult('Insert finished');
 
-    await SQLite.runInTransaction(async () => {
+    await connection.runInTransaction(async () => {
       // console.time('select');
-      const resultSet = await SQLite.executeSql(
+      const resultSet = await connection.executeSql(
         'SELECT id, bigint_field, string_field, double_field, null_field FROM test',
         []
       );
@@ -44,12 +45,23 @@ export default function App() {
   };
 
   React.useEffect(() => {
-    dbTest()
-      .then(() => console.log('query one ok'))
-      .catch(console.error);
-    dbTest()
-      .then(() => console.log('query two ok'))
-      .catch(console.error);
+    SQLiteModule.openDatabase('test.sqlite').then(
+      (connection: SqliteConnection) => {
+        dbTest(connection)
+          .then(() => console.log('query one ok'))
+          .catch(console.error);
+        dbTest(connection)
+          .then(() => console.log('query two ok'))
+          .catch(console.error);
+      }
+    );
+    return () => {
+      SQLiteModule.openDatabase('test.sqlite').then(
+        async (connection: SqliteConnection) => {
+          await connection.close();
+        }
+      );
+    };
   }, []);
 
   return (
