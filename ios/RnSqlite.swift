@@ -2,56 +2,64 @@ import SQLite3
 
 @objc(RnSqlite)
 class RnSqlite: NSObject {
+    var lock = NSLock()
     static var dbMap = [String : OpaquePointer]()
-
+    
     @objc static func requiresMainQueueSetup() -> Bool {
         return false
     }
 
     @objc(openDatabase:withResolver:withRejecter:)
-    func openDatabase(path: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        let documentsDirectory = paths[0]
-        let dbPath = documentsDirectory
-            .appendingPathComponent("..")
-            .appendingPathComponent("Library")
-            .appendingPathComponent(path)
-
-        NSLog(dbPath.absoluteString)
-        var db: OpaquePointer?
-        if sqlite3_open(dbPath.absoluteString, &db) != SQLITE_OK {
-            reject("-1", "Database open failed", nil)
+    func openDatabase(name: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
+        lock.lock()
+        if RnSqlite.dbMap[name] != nil {
+            resolve(name)
         } else {
-            if sqlite3_busy_timeout(db, 30000) != SQLITE_OK {
-                reject("-1", "Database busy timeout setup failed", nil)
+            let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+            let documentsDirectory = paths[0]
+            let dbPath = documentsDirectory
+                .appendingPathComponent("..")
+                .appendingPathComponent("Library")
+                .appendingPathComponent(name)
+
+            NSLog(dbPath.absoluteString)
+            var db: OpaquePointer?
+            if sqlite3_open(dbPath.absoluteString, &db) != SQLITE_OK {
+                reject("-1", "Database open failed", nil)
             } else {
-                let uid = NSUUID().uuidString
-                RnSqlite.dbMap[uid] = db
-                resolve(uid)
+                if sqlite3_busy_timeout(db, 30000) != SQLITE_OK {
+                    reject("-1", "Database busy timeout setup failed", nil)
+                } else {
+                    RnSqlite.dbMap[name] = db
+                    resolve(name)
+                }
             }
         }
+        lock.unlock()
     }
 
     @objc(closeDatabase:withResolver:withRejecter:)
-    func closeDatabase(uid: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-        let db = RnSqlite.dbMap[uid]
+    func closeDatabase(name: String, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
+        lock.lock()
+        let db = RnSqlite.dbMap[name]
         if sqlite3_close(db) != SQLITE_OK {
             reject("-1", "Database close failed", nil)
         } else {
-            RnSqlite.dbMap.removeValue(forKey: uid)
+            RnSqlite.dbMap.removeValue(forKey: name)
             resolve(nil)
         }
+        lock.unlock()
     }
 
     @objc(executeSql:withSql:withParams:withResolver:withRejecter:)
-    func executeSql(uid: String,
+    func executeSql(name: String,
                     sql: String,
                     params: Array<AnyObject>,
                     resolve:RCTPromiseResolveBlock,
                     reject:RCTPromiseRejectBlock) -> Void {
         var stmt: OpaquePointer?
 
-        let db = RnSqlite.dbMap[uid]
+        let db = RnSqlite.dbMap[name]
         if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) != SQLITE_OK {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             reject("-1", "Query failed \(errmsg)", nil)
@@ -120,24 +128,31 @@ class RnSqlite: NSObject {
     }
 
     @objc(beginTransaction:withResolver:withRejecter:)
-    func beginTransaction(uid: String,
+    func beginTransaction(name: String,
                           resolve:RCTPromiseResolveBlock,
                           reject:RCTPromiseRejectBlock) {
-        let db = RnSqlite.dbMap[uid]
-        if (sqlite3_exec(db, "BEGIN TRANSACTION", nil, nil, nil) != SQLITE_OK) {
-            NSLog("Transaction start failed")
-            reject("-1", "Transaction start failed", nil)
+        lock.lock()
+        let db = RnSqlite.dbMap[name]
+        if sqlite3_get_autocommit(db) != 0 {
+            if (sqlite3_exec(db, "BEGIN TRANSACTION", nil, nil, nil) != SQLITE_OK) {
+                NSLog("Transaction start failed")
+                reject("-1", "Transaction start failed", nil)
+            } else {
+                NSLog("Transaction successfully started")
+                resolve(nil)
+            }
         } else {
-            NSLog("Transaction successfully started")
-            resolve(nil)
+            resolve("BUSY")
         }
+        lock.unlock()
     }
 
     @objc(commitTransaction:withResolver:withRejecter:)
-    func commitTransaction(uid: String,
+    func commitTransaction(name: String,
                            resolve:RCTPromiseResolveBlock,
                            reject:RCTPromiseRejectBlock) {
-        let db = RnSqlite.dbMap[uid]
+        lock.lock()
+        let db = RnSqlite.dbMap[name]
         if (sqlite3_exec(db, "COMMIT TRANSACTION", nil, nil, nil) != SQLITE_OK) {
             NSLog("Transaction start failed")
             reject("-1", "Transaction commit failed", nil)
@@ -145,13 +160,15 @@ class RnSqlite: NSObject {
             NSLog("Transaction successfully commited")
             resolve(nil)
         }
+        lock.unlock()
     }
 
     @objc(rollbackTransaction:withResolver:withRejecter:)
-    func rollbackTransaction(uid: String,
+    func rollbackTransaction(name: String,
                              resolve:RCTPromiseResolveBlock,
                              reject:RCTPromiseRejectBlock) {
-        let db = RnSqlite.dbMap[uid]
+        lock.lock()
+        let db = RnSqlite.dbMap[name]
         if (sqlite3_exec(db, "ROLLBACK TRANSACTION", nil, nil, nil) != SQLITE_OK) {
             NSLog("Transaction rollback failed")
             reject("-1", "Transaction rollback failed", nil)
@@ -159,6 +176,7 @@ class RnSqlite: NSObject {
             NSLog("Transaction successfully rolled back")
             resolve(nil)
         }
+        lock.unlock()
     }
 
     private func bindStatementParams(db: OpaquePointer?, stmt: OpaquePointer?, params: Array<AnyObject>) throws {

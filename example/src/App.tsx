@@ -39,7 +39,7 @@ export default function App() {
       console.table(resultSet.rows);
     });
 
-    await SQLite.close();
+    // await SQLite.close();
     setResult('Query finished');
   };
 

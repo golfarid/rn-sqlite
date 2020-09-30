@@ -5,8 +5,9 @@ import { SqliteConnection } from './sqlite/sqlite.connection';
 const { RnSqlite } = NativeModules;
 
 export class SQLiteModule {
+  private static sessionId: number = 0;
   public static async openDatabase(name: string): Promise<SqliteConnection> {
-    let uid = await RnSqlite.openDatabase(name);
-    return new SQLite(uid);
+    let openedName = await RnSqlite.openDatabase(name);
+    return new SQLite(openedName, ++SQLiteModule.sessionId);
   }
 }

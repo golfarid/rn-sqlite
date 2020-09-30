@@ -82,6 +82,10 @@ class Database(context: Context, name: String, version: Int) :
     db.endTransaction()
   }
 
+  fun isInTransaction(): Boolean {
+    return db.inTransaction()
+  }
+
   private fun buildQuery(sql: String, params: Array<Any?>): String {
     val parametersRegexp = Regex("(\"([^]\"]*)\"|'([^']*)'|\\[([^\\[]*)\\])|(\\?)")
 
