@@ -18,7 +18,7 @@ export class SQLite implements SqliteConnection {
   }
 
   public async executeSql(sql: string, params: any[]): Promise<ResultSet> {
-    console.log(`${this.sessionId}: Execute ${sql} with ${params}`);
+    console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
     return await RnSqlite.executeSql(this.name, sql, params);
   }
 
@@ -26,20 +26,21 @@ export class SQLite implements SqliteConnection {
     let timestamp = new Date();
     do {
       if ((await RnSqlite.beginTransaction(this.name)) !== 'BUSY') {
-        console.log(`${this.sessionId}: Transaction started`);
+        console.debug(`${this.sessionId}: Transaction started`);
         try {
           await runnable();
-          console.log(`${this.sessionId}: Commit transaction`);
+          console.debug(`${this.sessionId}: Commit transaction`);
           await RnSqlite.commitTransaction(this.name);
         } catch (e) {
-          console.log(`${this.sessionId}: Transaction failed with ${e}`);
+          console.debug(`${this.sessionId}: Transaction failed with ${e}`);
           await RnSqlite.rollbackTransaction(this.name);
-          console.log(`${this.sessionId}: Rollback transaction`);
+          console.debug(`${this.sessionId}: Rollback transaction`);
+          throw e;
         }
 
         return;
       } else {
-        console.log(`${this.sessionId}: Already in transaction... wait`);
+        console.debug(`${this.sessionId}: Already in transaction... wait`);
         await delay(TRANSACTION_CHECK_INTERVAL);
       }
     } while (
@@ -51,7 +52,7 @@ export class SQLite implements SqliteConnection {
   }
 
   public async close(): Promise<void> {
-    console.log(`${this.sessionId}: Close database`);
+    console.debug(`${this.sessionId}: Close database`);
     return await RnSqlite.closeDatabase(this.name);
   }
 }
