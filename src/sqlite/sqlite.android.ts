@@ -43,14 +43,17 @@ export class SQLite implements SqliteConnection {
         return;
       } else {
         console.debug(`${this.sessionId}: Already in transaction... wait`);
-        await delay(TRANSACTION_CHECK_INTERVAL);
+        if (
+          new Date().getTime() - timestamp.getTime() <
+          TRANSACTION_WAIT_TIMEOUT
+        ) {
+          await delay(TRANSACTION_CHECK_INTERVAL);
+        } else {
+          // rollback current transaction
+          await RnSqlite.endTransaction(this.name);
+        }
       }
-    } while (
-      new Date().getTime() - timestamp.getTime() <
-      TRANSACTION_WAIT_TIMEOUT
-    );
-
-    throw new Error('Already in transaction');
+    } while (true);
   }
 
   public async close(): Promise<void> {
