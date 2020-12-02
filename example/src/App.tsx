@@ -21,7 +21,7 @@ export default function App() {
       for (let i = 0; i < 100; i++) {
         const resultSet = await connection.executeSql(
           'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
-          [1600214400000, `Some \? string ${i}`, i * 1.1, null]
+          [new Date(), `Some \? string ${i}`, i * 1.1, null]
         );
         console.log(resultSet);
       }
