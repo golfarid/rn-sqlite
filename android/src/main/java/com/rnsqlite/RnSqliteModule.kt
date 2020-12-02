@@ -2,7 +2,6 @@ package com.rnsqlite
 
 import android.util.Log
 import com.facebook.react.bridge.*
-import java.lang.Exception
 import kotlin.collections.HashMap
 
 
@@ -64,9 +63,10 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
   }
 
   @ReactMethod
-  fun executeSql(name: String, sql: String, params: ReadableArray, promise: Promise) {
+  fun executeSql(name: String, sql: String, promise: Promise) {
     val db = dbMap[name]
-    val result = db?.executeSql(sql, jsArrayToJavaArray(params))
+
+    val result = db?.executeSql(sql)
 
     val rnRows = Arguments.createArray()
     val rowsIterator = result?.listIterator()
@@ -106,25 +106,5 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       rnResult.putNull("last_insert_row_id")
     }
     promise.resolve(rnResult)
-  }
-
-  private fun jsArrayToJavaArray(jsArray: ReadableArray?): Array<Any?> {
-    if (jsArray != null) {
-      val javaArray = Array<Any?>(jsArray.size()) { null }
-      (0 until jsArray.size()).forEach {
-        when (jsArray.getType(it)) {
-          ReadableType.Null -> javaArray[it] = null
-          ReadableType.Boolean -> javaArray[it] = jsArray.getBoolean(it)
-          ReadableType.Number -> javaArray[it] = jsArray.getDouble(it)
-          ReadableType.String -> javaArray[it] = jsArray.getString(it)
-          ReadableType.Array -> javaArray[it] = jsArrayToJavaArray(jsArray.getArray(it))
-          ReadableType.Map -> throw Exception("ReadableType.Map unsupported yet")
-        }
-      }
-
-      return javaArray
-    }
-
-    return Array(0) { null }
   }
 }

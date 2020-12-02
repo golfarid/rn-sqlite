@@ -5,7 +5,6 @@ import android.database.Cursor
 import android.database.Cursor.*
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import java.math.BigDecimal
 
 class Database(context: Context, name: String, version: Int) :
   SQLiteOpenHelper(context, name, null, version) {
@@ -19,10 +18,10 @@ class Database(context: Context, name: String, version: Int) :
 //    TODO("Not yet implemented")
   }
 
-  fun executeSql(sql: String, params: Array<Any?>): MutableList<MutableList<Any?>?> {
+  fun executeSql(sql: String): MutableList<MutableList<Any?>?> {
     var cursor: Cursor? = null
     try {
-      cursor = db.rawQuery(buildQuery(sql, params), Array(0) {""})
+      cursor = db.rawQuery(sql, Array(0) {""})
       val result = MutableList<MutableList<Any?>?>(0) { null }
       if (cursor.moveToFirst()) {
         val header = MutableList<Any?>(0) {null}
@@ -86,43 +85,9 @@ class Database(context: Context, name: String, version: Int) :
     return db.inTransaction()
   }
 
-  private fun buildQuery(sql: String, params: Array<Any?>): String {
-    val parametersRegexp = Regex("(\"([^]\"]*)\"|'([^']*)'|\\[([^\\[]*)\\])|(\\?)")
-
-    var bindSql = sql
-    (params.indices).forEach {
-      val value = params[it]
-
-      val matchResults = parametersRegexp.findAll(bindSql)
-      var placeholderIndex: Int? = null
-      for (matchResult in matchResults) {
-        placeholderIndex = matchResult.groups[5]?.range?.first
-        if (placeholderIndex != null) break
-      }
-
-      if (placeholderIndex != null) {
-        val sqlValue = if (value == null) {
-          "NULL"
-        } else if (value is Double) {
-          BigDecimal(value).toPlainString()
-        } else if (value is Boolean) {
-          if (value) "1" else "0"
-        } else if (value is ByteArray) {
-          String(value, Charsets.UTF_8)
-        } else {
-          DatabaseUtils.escapeString(value.toString())
-        }
-
-        bindSql = bindSql.substring(0, placeholderIndex) + sqlValue + bindSql.substring(placeholderIndex + 1)
-      }
-    }
-
-    return bindSql
-  }
-
   override fun close() {
     if (this.db.isOpen) {
-      this.db.close();
+      this.db.close()
     }
 
     super.close()
