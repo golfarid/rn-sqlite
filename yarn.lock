@@ -8673,7 +8673,7 @@ sprintf-js@~1.0.2:
 
 "sqlstring@https://github.com/golfarid/sqlstring.git":
   version "2.3.2"
-  resolved "https://github.com/golfarid/sqlstring.git#b716aa5d3b9e4de2b775ac5e325e7205dded6939"
+  resolved "https://github.com/golfarid/sqlstring.git#ffa69e28d74dd3ba60cb719bac843399d0aee932"
 
 sshpk@^1.7.0:
   version "1.16.1"

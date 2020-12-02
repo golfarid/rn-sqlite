@@ -51,10 +51,9 @@ class RnSqlite: NSObject {
         lock.unlock()
     }
 
-    @objc(executeSql:withSql:withParams:withResolver:withRejecter:)
+    @objc(executeSql:withSql:withResolver:withRejecter:)
     func executeSql(name: String,
                     sql: String,
-                    params: Array<AnyObject>,
                     resolve:RCTPromiseResolveBlock,
                     reject:RCTPromiseRejectBlock) -> Void {
         var stmt: OpaquePointer?
@@ -64,16 +63,6 @@ class RnSqlite: NSObject {
             let errmsg = String(cString: sqlite3_errmsg(db)!)
             reject("-1", "Query failed \(errmsg)", nil)
         } else {
-            do {
-                try bindStatementParams(db: db, stmt: stmt, params: params)
-            } catch let error as ParameterBindError {
-                reject("-1", error.message, nil)
-                return
-            } catch {
-                reject("-1", "error: \(error)", nil)
-                return
-            }
-
             let rows = NSMutableArray()
             var columns = Array<String>()
             while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -178,48 +167,4 @@ class RnSqlite: NSObject {
         }
         lock.unlock()
     }
-
-    private func bindStatementParams(db: OpaquePointer?, stmt: OpaquePointer?, params: Array<AnyObject>) throws {
-        for (index, element) in params.enumerated() {
-            try bindStatementParameter(db: db, stmt: stmt, index: index, parameter: element)
-        }
-    }
-
-    private func bindStatementParameter(db: OpaquePointer?, stmt: OpaquePointer?, index: Int, parameter: AnyObject) throws {
-            switch parameter
-            {
-                case is NSNull:
-                    if sqlite3_bind_null(stmt, Int32(index + 1)) != SQLITE_OK {
-                        let errmsg = String(cString: sqlite3_errmsg(db)!)
-                        throw ParameterBindError(value: parameter, message:errmsg)
-                    }
-                case is String:
-                    if sqlite3_bind_text(stmt, Int32(index + 1), (parameter as! NSString).utf8String, -1, nil) != SQLITE_OK {
-                        let errmsg = String(cString: sqlite3_errmsg(db)!)
-                        throw ParameterBindError(value: parameter, message:errmsg)
-                    }
-                case is NSInteger:
-                    if sqlite3_bind_int64(stmt, Int32(index + 1), Int64((parameter as! NSInteger))) != SQLITE_OK {
-                        let errmsg = String(cString: sqlite3_errmsg(db)!)
-                        throw ParameterBindError(value: parameter, message:errmsg)
-                    }
-                case is NSNumber:
-                    if sqlite3_bind_double(stmt, Int32(index + 1), (parameter as! NSNumber).doubleValue) != SQLITE_OK {
-                        let errmsg = String(cString: sqlite3_errmsg(db)!)
-                        throw ParameterBindError(value: parameter, message:errmsg)
-                    }
-                case is Bool:
-                    if sqlite3_bind_int(stmt, Int32(index + 1), (parameter as! Bool) ? 1 : 0) != SQLITE_OK {
-                        let errmsg = String(cString: sqlite3_errmsg(db)!)
-                        throw ParameterBindError(value: parameter, message:errmsg)
-                    }
-                default:
-                    throw ParameterBindError(value: parameter, message: "Unexpected parameter type \(parameter)")
-            }
-    }
-}
-
-struct ParameterBindError: Error {
-    let value: AnyObject
-    let message: String
 }
