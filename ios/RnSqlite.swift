@@ -51,6 +51,7 @@ class RnSqlite: NSObject {
         lock.unlock()
     }
 
+
     @objc(executeSql:withSql:withResolver:withRejecter:)
     func executeSql(name: String,
                     sql: String,
@@ -64,55 +65,72 @@ class RnSqlite: NSObject {
             reject("-1", "Query failed \(errmsg)", nil)
         } else {
             let rows = NSMutableArray()
+            var done = false
+            var failed = false
+            
             var columns = Array<String>()
-            while (sqlite3_step(stmt) == SQLITE_ROW) {
-                if columns.count == 0 {
-                    for i in 0..<sqlite3_column_count(stmt) {
-                        columns.append(String(cString: sqlite3_column_name(stmt, i)))
-                    }
+            while (!done && !failed) {
+                let result = sqlite3_step(stmt)
+                switch result {
+                    case SQLITE_DONE:
+                        done = true
+                        break
+                    case SQLITE_ROW:
+                        if columns.count == 0 {
+                            for i in 0..<sqlite3_column_count(stmt) {
+                                columns.append(String(cString: sqlite3_column_name(stmt, i)))
+                            }
+                        }
+
+                        let row = NSMutableDictionary()
+
+                        for i in 0..<columns.count {
+                            let columnName = columns[i]
+                            switch (sqlite3_column_type(stmt, Int32(i))) {
+                                case SQLITE_NULL:
+                                    row[columnName] = NSNull()
+                                    break
+                                case SQLITE_INTEGER:
+                                    row[columnName] = sqlite3_column_int64(stmt, Int32(i))
+                                    break
+                                case SQLITE_FLOAT:
+                                    row[columnName] = sqlite3_column_double(stmt, Int32(i))
+                                    break
+                                case SQLITE3_TEXT:
+                                    row[columnName] = String(cString: sqlite3_column_text(stmt, Int32(i)))
+                                    break
+                                case SQLITE_BLOB:
+                                    row[columnName] = NSNull()
+                                    break
+                                default:
+                                    row[columnName] = NSNull()
+                                    break
+                            }
+                        }
+
+                        rows.add(row)
+                        break
+                    default:
+                        failed = true
+                        let errmsg = String(cString: sqlite3_errmsg(db)!)
+                        reject("-1", "Query failed \(errmsg)", nil)
                 }
-
-                let row = NSMutableDictionary()
-
-                for i in 0..<columns.count {
-                    let columnName = columns[i]
-                    switch (sqlite3_column_type(stmt, Int32(i))) {
-                        case SQLITE_NULL:
-                            row[columnName] = NSNull()
-                            break
-                        case SQLITE_INTEGER:
-                            row[columnName] = sqlite3_column_int64(stmt, Int32(i))
-                            break
-                        case SQLITE_FLOAT:
-                            row[columnName] = sqlite3_column_double(stmt, Int32(i))
-                            break
-                        case SQLITE3_TEXT:
-                            row[columnName] = String(cString: sqlite3_column_text(stmt, Int32(i)))
-                            break
-                        case SQLITE_BLOB:
-                            row[columnName] = NSNull()
-                            break
-                        default:
-                            row[columnName] = NSNull()
-                            break
-                    }
-                }
-
-                rows.add(row)
             }
-
+            
             sqlite3_finalize(stmt)
-            let lastInsertRowId = sqlite3_last_insert_rowid(db)
+            if done {
+                let lastInsertRowId = sqlite3_last_insert_rowid(db)
 
-            let result = NSMutableDictionary()
-            result["rows"] = rows
-            if (lastInsertRowId > 0) {
-                result["last_insert_row_id"] = lastInsertRowId
-            } else {
-                result["last_insert_row_id"] = NSNull()
+                let result = NSMutableDictionary()
+                result["rows"] = rows
+                if (lastInsertRowId > 0) {
+                    result["last_insert_row_id"] = lastInsertRowId
+                } else {
+                    result["last_insert_row_id"] = NSNull()
+                }
+
+                resolve(result)
             }
-
-            resolve(result)
         }
     }
 
