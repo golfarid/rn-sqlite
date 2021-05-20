@@ -77,9 +77,9 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       for ((rowIndex, row) in rowsIterator.withIndex()) {
         if (rowIndex > 0) {
           val jsonRow = JsonObject()
-
+          
           val columnsIterator: MutableListIterator<Any?>? = row?.listIterator()
-          if (columnsIterator != null) {
+          if (columnsIterator != null && columnsIterator.hasNext()) {
             for ((columnIndex, value) in columnsIterator.withIndex()) {
               val columnName = result[0]?.get(columnIndex).toString()
 
@@ -94,8 +94,8 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
                 }
               }
             }
-            jsonRows.add(jsonRow)
           }
+          jsonRows.add(jsonRow)
         }
       }
     }
