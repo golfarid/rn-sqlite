@@ -21,7 +21,12 @@ export class SQLite implements SqliteConnection {
 
   public async executeSql(sql: string, params: any[]): Promise<ResultSet> {
     console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
-    return await RnSqlite.executeSql(this.name, SqlString.format(sql, params));
+    const json = await RnSqlite.executeSql(
+      this.name,
+      SqlString.format(sql, params)
+    );
+
+    return JSON.parse(json);
   }
 
   public async runInTransaction(runnable: () => void): Promise<void> {

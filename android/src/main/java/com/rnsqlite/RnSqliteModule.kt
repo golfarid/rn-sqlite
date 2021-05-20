@@ -2,6 +2,9 @@ package com.rnsqlite
 
 import android.util.Log
 import com.facebook.react.bridge.*
+import com.google.gson.*
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.collections.HashMap
 
 
@@ -68,12 +71,12 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     val result = db?.executeSql(sql)
 
-    val rnRows = Arguments.createArray()
+    val jsonRows = JsonArray()
     val rowsIterator = result?.listIterator()
     if (rowsIterator != null) {
       for ((rowIndex, row) in rowsIterator.withIndex()) {
         if (rowIndex > 0) {
-          val rnRow = Arguments.createMap()
+          val jsonRow = JsonObject()
 
           val columnsIterator: MutableListIterator<Any?>? = row?.listIterator()
           if (columnsIterator != null) {
@@ -81,30 +84,33 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
               val columnName = result[0]?.get(columnIndex).toString()
 
               if (value == null) {
-                rnRow.putNull(columnName)
+                jsonRow.add(columnName, JsonNull.INSTANCE)
               } else {
                 when (value) {
-                  is Long -> rnRow.putDouble(columnName, value.toDouble())
-                  is String -> rnRow.putString(columnName, value)
-                  is Double -> rnRow.putDouble(columnName, value)
-                  is ByteArray -> rnRow.putString(columnName, String(value, Charsets.UTF_8))
+                  is Long -> jsonRow.addProperty(columnName, value.toDouble())
+                  is String -> jsonRow.addProperty(columnName, value)
+                  is Double -> jsonRow.addProperty(columnName, value)
+                  is ByteArray -> jsonRow.addProperty(columnName, String(value, Charsets.UTF_8))
                 }
               }
             }
-            rnRows.pushMap(rnRow)
+            jsonRows.add(jsonRow)
           }
         }
       }
     }
 
-    val rnResult = Arguments.createMap()
-    rnResult.putArray("rows", rnRows)
+    val jsonResult = JsonObject()
+    jsonResult.add("rows", jsonRows)
     val lastInsertRowId = db?.getLastInsertRowId()
     if (lastInsertRowId != null && lastInsertRowId > 0) {
-      rnResult.putDouble("last_insert_row_id", lastInsertRowId)
+      jsonResult.addProperty("last_insert_row_id", lastInsertRowId)
     } else {
-      rnResult.putNull("last_insert_row_id")
+      jsonResult.add("last_insert_row_id", JsonNull.INSTANCE)
     }
-    promise.resolve(rnResult)
+
+    val gson = Gson()
+    Log.d("RnSqliteModule", gson.toJson(jsonResult))
+    promise.resolve(gson.toJson(jsonResult))
   }
 }
