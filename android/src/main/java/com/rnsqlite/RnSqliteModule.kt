@@ -77,7 +77,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
       for ((rowIndex, row) in rowsIterator.withIndex()) {
         if (rowIndex > 0) {
           val jsonRow = JsonObject()
-          
+
           val columnsIterator: MutableListIterator<Any?>? = row?.listIterator()
           if (columnsIterator != null && columnsIterator.hasNext()) {
             for ((columnIndex, value) in columnsIterator.withIndex()) {
@@ -110,7 +110,7 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
     }
 
     val gson = Gson()
-    Log.d("RnSqliteModule", gson.toJson(jsonResult))
-    promise.resolve(gson.toJson(jsonResult))
+    val json = gson.toJson(jsonResult)
+    promise.resolve(json)
   }
 }
