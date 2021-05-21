@@ -2,8 +2,6 @@ package com.rnsqlite
 
 import android.util.Log
 import com.facebook.react.bridge.*
-import com.google.gson.*
-import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.collections.HashMap
 
@@ -69,48 +67,18 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
   fun executeSql(name: String, sql: String, promise: Promise) {
     val db = dbMap[name]
 
-    val result = db?.executeSql(sql)
+    val jsonRows = db?.executeSql(sql)
 
-    val jsonRows = JsonArray()
-    val rowsIterator = result?.listIterator()
-    if (rowsIterator != null) {
-      for ((rowIndex, row) in rowsIterator.withIndex()) {
-        if (rowIndex > 0) {
-          val jsonRow = JsonObject()
-
-          val columnsIterator: MutableListIterator<Any?>? = row?.listIterator()
-          if (columnsIterator != null && columnsIterator.hasNext()) {
-            for ((columnIndex, value) in columnsIterator.withIndex()) {
-              val columnName = result[0]?.get(columnIndex).toString()
-
-              if (value == null) {
-                jsonRow.add(columnName, JsonNull.INSTANCE)
-              } else {
-                when (value) {
-                  is Long -> jsonRow.addProperty(columnName, value.toDouble())
-                  is String -> jsonRow.addProperty(columnName, value)
-                  is Double -> jsonRow.addProperty(columnName, value)
-                  is ByteArray -> jsonRow.addProperty(columnName, String(value, Charsets.UTF_8))
-                }
-              }
-            }
-          }
-          jsonRows.add(jsonRow)
-        }
-      }
-    }
-
-    val jsonResult = JsonObject()
-    jsonResult.add("rows", jsonRows)
+    val jsonResult = JSONObject()
+    jsonResult.put("rows", jsonRows)
     val lastInsertRowId = db?.getLastInsertRowId()
     if (lastInsertRowId != null && lastInsertRowId > 0) {
-      jsonResult.addProperty("last_insert_row_id", lastInsertRowId)
+      jsonResult.put("last_insert_row_id", lastInsertRowId)
     } else {
-      jsonResult.add("last_insert_row_id", JsonNull.INSTANCE)
+      jsonResult.put("last_insert_row_id", JSONObject.NULL)
     }
 
-    val gson = Gson()
-    val json = gson.toJson(jsonResult)
+    val json = jsonResult.toString()
     promise.resolve(json)
   }
 }
