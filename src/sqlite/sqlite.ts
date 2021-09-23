@@ -19,7 +19,9 @@ export class SQLite implements SqliteConnection {
   }
 
   public async executeSql(sql: string, params: any[]): Promise<ResultSet> {
-    console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
+    if (__DEV__) {
+      console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
+    }
     return await RnSqlite.executeSql(this.name, SqlString.format(sql, params));
   }
 
@@ -27,21 +29,31 @@ export class SQLite implements SqliteConnection {
     let timestamp = new Date();
     do {
       if ((await RnSqlite.beginTransaction(this.name)) !== 'BUSY') {
-        console.debug(`${this.sessionId}: Transaction started`);
+        if (__DEV__) {
+          console.debug(`${this.sessionId}: Transaction started`);
+        }
         try {
           await runnable();
-          console.debug(`${this.sessionId}: Commit transaction`);
+          if (__DEV__) {
+            console.debug(`${this.sessionId}: Commit transaction`);
+          }
           await RnSqlite.commitTransaction(this.name);
         } catch (e) {
-          console.debug(`${this.sessionId}: Transaction failed with ${e}`);
+          if (__DEV__) {
+            console.debug(`${this.sessionId}: Transaction failed with ${e}`);
+          }
           await RnSqlite.rollbackTransaction(this.name);
-          console.debug(`${this.sessionId}: Rollback transaction`);
+          if (__DEV__) {
+            console.debug(`${this.sessionId}: Rollback transaction`);
+          }
           throw e;
         }
 
         return;
       } else {
-        console.debug(`${this.sessionId}: Already in transaction... wait`);
+        if (__DEV__) {
+          console.debug(`${this.sessionId}: Already in transaction... wait`);
+        }
         if (
           new Date().getTime() - timestamp.getTime() <
           TRANSACTION_WAIT_TIMEOUT
@@ -56,7 +68,9 @@ export class SQLite implements SqliteConnection {
   }
 
   public async close(): Promise<void> {
-    console.debug(`${this.sessionId}: Close database`);
+    if (__DEV__) {
+      console.debug(`${this.sessionId}: Close database`);
+    }
     return await RnSqlite.closeDatabase(this.name);
   }
 }

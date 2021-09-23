@@ -20,30 +20,48 @@ export class SQLite implements SqliteConnection {
   }
 
   public async executeSql(sql: string, params: any[]): Promise<ResultSet> {
-    console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
-    return await RnSqlite.executeSql(this.name, SqlString.format(sql, params));
+    if (__DEV__) {
+      console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
+    }
+
+    const json = await RnSqlite.executeSql(
+      this.name,
+      SqlString.format(sql, params)
+    );
+
+    return JSON.parse(json);
   }
 
   public async runInTransaction(runnable: () => void): Promise<void> {
     let timestamp = new Date();
     do {
       if ((await RnSqlite.beginTransaction(this.name)) !== 'BUSY') {
-        console.debug(`${this.sessionId}: Transaction started`);
+        if (__DEV__) {
+          console.debug(`${this.sessionId}: Transaction started`);
+        }
         try {
           await runnable();
-          console.debug(`${this.sessionId}: Commit transaction`);
+          if (__DEV__) {
+            console.debug(`${this.sessionId}: Commit transaction`);
+          }
           await RnSqlite.commitTransaction(this.name);
         } catch (e) {
-          console.debug(`${this.sessionId}: Transaction failed with ${e}`);
+          if (__DEV__) {
+            console.debug(`${this.sessionId}: Transaction failed with ${e}`);
+          }
           throw e;
         } finally {
           await RnSqlite.endTransaction(this.name);
-          console.debug(`${this.sessionId}: End transaction`);
+          if (__DEV__) {
+            console.debug(`${this.sessionId}: End transaction`);
+          }
         }
 
         return;
       } else {
-        console.debug(`${this.sessionId}: Already in transaction... wait`);
+        if (__DEV__) {
+          console.debug(`${this.sessionId}: Already in transaction... wait`);
+        }
         if (
           new Date().getTime() - timestamp.getTime() <
           TRANSACTION_WAIT_TIMEOUT
