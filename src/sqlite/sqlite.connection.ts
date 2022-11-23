@@ -5,7 +5,7 @@ export const TRANSACTION_CHECK_INTERVAL = 100;
 
 export const delay = (millis: number) =>
   new Promise((resolve) => {
-    setTimeout((_) => resolve(), millis);
+    setTimeout((_) => resolve(_), millis);
   });
 
 export interface SqliteConnection {
