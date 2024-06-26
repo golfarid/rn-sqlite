@@ -61,6 +61,7 @@ export default function App() {
           .catch(console.error);
       }
     );
+
     return () => {
       SQLiteModule.openDatabase('test.sqlite').then(
         async (connection: SqliteConnection) => {
