@@ -92,7 +92,7 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "sqlstring": "*",
+    "sqlstring": "https://github.com/golfarid/sqlstring.git",
     "uuid": "*"
   },
   "workspaces": [
