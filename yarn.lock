@@ -11523,6 +11523,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "rn-sqlite@workspace:."
   dependencies:
+    "@babel/plugin-transform-export-namespace-from": "npm:^7.24.7"
     "@commitlint/config-conventional": "npm:^17.3.0"
     "@evilmartians/lefthook": "npm:^1.5.0"
     "@react-native/eslint-config": "npm:^0.73.1"
