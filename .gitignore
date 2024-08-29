@@ -72,3 +72,5 @@ lib/
 !.yarn/versions
 
 node
+
+/vendor
