@@ -1,10 +1,10 @@
-import { ResultSet } from './result.set';
+import { type ResultSet } from './result.set';
 
 const { RnSqlite } = NativeModules;
 import { NativeModules } from 'react-native';
 import {
   delay,
-  SqliteConnection,
+  type SqliteConnection,
   TRANSACTION_CHECK_INTERVAL,
   TRANSACTION_WAIT_TIMEOUT,
 } from './sqlite.connection';

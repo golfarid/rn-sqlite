@@ -1,0 +1,1 @@
+{"version":3,"file":"rn-sqlite.d.ts","sourceRoot":"","sources":["../../../src/rn-sqlite.tsx"],"names":[],"mappings":"AAEA,OAAO,EAAE,KAAK,gBAAgB,EAAE,MAAM,4BAA4B,CAAC;AAInE,qBAAa,YAAY;IACvB,OAAO,CAAC,MAAM,CAAC,SAAS,CAAa;WACjB,YAAY,CAAC,IAAI,EAAE,MAAM,GAAG,OAAO,CAAC,gBAAgB,CAAC;CAI1E"}
