@@ -4,6 +4,7 @@
   "description": "Simple sqlite native wrapper",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
+  "types": "lib/typescript/module/index.d.ts",
   "react-native": "index",
   "source": "index",
   "exports": {
