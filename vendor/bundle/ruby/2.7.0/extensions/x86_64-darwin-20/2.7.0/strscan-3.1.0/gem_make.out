@@ -1,0 +1,18 @@
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/strscan-3.1.0/ext/strscan
+/Users/admin/.rvm/rubies/ruby-2.7.5/bin/ruby -I /Users/admin/.rvm/rubies/ruby-2.7.5/lib/ruby/2.7.0 -r ./siteconf20240829-42070-zlmz5a.rb extconf.rb
+checking for onig_region_memsize() in ruby.h... yes
+checking for rb_reg_onig_match() in ruby.h... no
+creating Makefile
+
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/strscan-3.1.0/ext/strscan
+make "DESTDIR=" clean
+
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/strscan-3.1.0/ext/strscan
+make "DESTDIR="
+compiling strscan.c
+linking shared-object strscan.bundle
+ld: warning: -multiply_defined is obsolete
+
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/strscan-3.1.0/ext/strscan
+make "DESTDIR=" install
+/usr/local/opt/coreutils/bin/ginstall -c -m 0755 strscan.bundle ./.gem.20240829-42070-hgkosp

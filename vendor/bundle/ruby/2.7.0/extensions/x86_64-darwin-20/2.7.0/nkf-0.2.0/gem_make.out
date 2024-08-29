@@ -1,0 +1,16 @@
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/nkf-0.2.0/ext/nkf
+/Users/admin/.rvm/rubies/ruby-2.7.5/bin/ruby -I /Users/admin/.rvm/rubies/ruby-2.7.5/lib/ruby/2.7.0 -r ./siteconf20240829-42070-18gxwvs.rb extconf.rb
+creating Makefile
+
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/nkf-0.2.0/ext/nkf
+make "DESTDIR=" clean
+
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/nkf-0.2.0/ext/nkf
+make "DESTDIR="
+compiling nkf.c
+linking shared-object nkf.bundle
+ld: warning: -multiply_defined is obsolete
+
+current directory: /Users/admin/Projects/rn-sqlite/vendor/bundle/ruby/2.7.0/gems/nkf-0.2.0/ext/nkf
+make "DESTDIR=" install
+/usr/local/opt/coreutils/bin/ginstall -c -m 0755 nkf.bundle ./.gem.20240829-42070-1o0wcha

@@ -5,7 +5,6 @@ import com.facebook.react.bridge.*
 import org.json.JSONObject
 import kotlin.collections.HashMap
 
-
 @Suppress("unused")
 class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
   companion object {
