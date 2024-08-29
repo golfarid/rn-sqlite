@@ -4,6 +4,9 @@
   "description": "Simple sqlite native wrapper",
   "react-native": "index",
   "source": "index",
+  "main": "lib/commonjs/rn-sqlite",
+  "module": "lib/module/rn-sqlite",
+  "types": "lib/typescript/module/index.d.ts",
   "exports": {
     ".": {
       "import": {
