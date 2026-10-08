@@ -84488,9 +84488,41 @@ __d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, expor
       };
     }()
   }, {
-    name: 'data persists across close and reopen',
+    name: 'invalid SQL rejects and the connection stays usable',
     run: function () {
       var _ref12 = (0, _asyncToGenerator2.default)(function* () {
+        var db = yield open();
+        var error = yield assertRejects(db.executeSql('SELECT * FROM no_such_table', []), 'invalid statement');
+        assert(error instanceof Error, 'rejects with an Error');
+        assert(error.message.includes('no_such_table'), `message mentions the table: ${error.message}`);
+        var result = yield db.executeSql('SELECT 1 AS one', []);
+        assertEqual(result.rows[0].one, 1, 'connection still works');
+      });
+      return function run() {
+        return _ref12.apply(this, arguments);
+      };
+    }()
+  }, {
+    name: 'a failing statement inside a transaction rolls it back',
+    run: function () {
+      var _ref13 = (0, _asyncToGenerator2.default)(function* () {
+        var db = yield open();
+        var before = yield count(db);
+        yield assertRejects(db.runInTransaction(/*#__PURE__*/(0, _asyncToGenerator2.default)(function* () {
+          yield db.executeSql('INSERT INTO kv (tag) VALUES (?)', ['broken']);
+          yield db.executeSql('INSERT INTO no_such_table VALUES (1)', []);
+        })), 'transaction with a bad statement');
+        assertEqual(yield count(db), before, 'row count unchanged');
+        assertEqual(yield count(db, "tag = 'broken'"), 0, 'no partial rows');
+      });
+      return function run() {
+        return _ref13.apply(this, arguments);
+      };
+    }()
+  }, {
+    name: 'data persists across close and reopen',
+    run: function () {
+      var _ref15 = (0, _asyncToGenerator2.default)(function* () {
         var db = yield open();
         yield db.executeSql('INSERT INTO kv (text_field, tag) VALUES (?, ?)', ['still here', 'persist']);
         yield db.close();
@@ -84500,13 +84532,13 @@ __d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, expor
         assertEqual(result.rows[0].text_field, 'still here', 'value');
       });
       return function run() {
-        return _ref12.apply(this, arguments);
+        return _ref15.apply(this, arguments);
       };
     }()
   }, {
     name: 'separate databases are isolated',
     run: function () {
-      var _ref13 = (0, _asyncToGenerator2.default)(function* () {
+      var _ref16 = (0, _asyncToGenerator2.default)(function* () {
         var other = yield require(_dependencyMap[2], "/Users/admin/Projects/rn-sqlite/src/index").SQLiteModule.openDatabase(OTHER_DB_NAME);
         yield other.executeSql('DROP TABLE IF EXISTS only_here', []);
         yield other.executeSql('CREATE TABLE only_here (x INTEGER)', []);
@@ -84519,7 +84551,7 @@ __d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, expor
         yield other.close();
       });
       return function run() {
-        return _ref13.apply(this, arguments);
+        return _ref16.apply(this, arguments);
       };
     }()
   }];

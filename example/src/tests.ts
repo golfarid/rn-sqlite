@@ -200,6 +200,39 @@ const tests: TestCase[] = [
     },
   },
   {
+    name: 'invalid SQL rejects and the connection stays usable',
+    run: async () => {
+      const db = await open();
+      const error = await assertRejects(
+        db.executeSql('SELECT * FROM no_such_table', []),
+        'invalid statement'
+      );
+      assert(error instanceof Error, 'rejects with an Error');
+      assert(
+        error.message.includes('no_such_table'),
+        `message mentions the table: ${error.message}`
+      );
+      const result = await db.executeSql('SELECT 1 AS one', []);
+      assertEqual(result.rows[0].one, 1, 'connection still works');
+    },
+  },
+  {
+    name: 'a failing statement inside a transaction rolls it back',
+    run: async () => {
+      const db = await open();
+      const before = await count(db);
+      await assertRejects(
+        db.runInTransaction(async () => {
+          await db.executeSql('INSERT INTO kv (tag) VALUES (?)', ['broken']);
+          await db.executeSql('INSERT INTO no_such_table VALUES (1)', []);
+        }),
+        'transaction with a bad statement'
+      );
+      assertEqual(await count(db), before, 'row count unchanged');
+      assertEqual(await count(db, "tag = 'broken'"), 0, 'no partial rows');
+    },
+  },
+  {
     name: 'data persists across close and reopen',
     run: async () => {
       const db = await open();
