@@ -24,7 +24,7 @@ class RnSqlite: NSObject {
 
             NSLog(dbPath.absoluteString)
             var db: OpaquePointer?
-            if sqlite3_open(dbPath.absoluteString, &db) != SQLITE_OK {
+            if sqlite3_open(dbPath.standardizedFileURL.path, &db) != SQLITE_OK {
                 reject("-1", "Database open failed", nil)
             } else {
                 if sqlite3_busy_timeout(db, 30000) != SQLITE_OK {
