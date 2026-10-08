@@ -1,18 +1,10 @@
 {
+  "extends": "@react-native/typescript-config",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "*": ["*"],
-      "rn-sqlite": ["../"]
-    },
-    "target": "esnext",
-    "lib": ["esnext"],
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "jsx": "react"
+      "rn-sqlite": ["../src/index"]
+    }
   },
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts"
-  ]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
 }

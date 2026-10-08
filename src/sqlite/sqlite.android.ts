@@ -9,7 +9,7 @@ import {
   TRANSACTION_CHECK_INTERVAL,
   TRANSACTION_WAIT_TIMEOUT,
 } from './sqlite.connection';
-import SqlString from 'sqlstring';
+import { format } from './sqlstring';
 
 export class SQLite implements SqliteConnection {
   private readonly sessionId: number;
@@ -24,10 +24,7 @@ export class SQLite implements SqliteConnection {
       console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
     }
 
-    const json = await RnSqlite.executeSql(
-      this.name,
-      SqlString.format(sql, params)
-    );
+    const json = await RnSqlite.executeSql(this.name, format(sql, params));
 
     return JSON.parse(json);
   }

@@ -8,7 +8,7 @@ import {
   TRANSACTION_CHECK_INTERVAL,
   TRANSACTION_WAIT_TIMEOUT,
 } from './sqlite.connection';
-import SqlString from 'sqlstring';
+import { format } from './sqlstring';
 
 export class SQLite implements SqliteConnection {
   private readonly name: String;
@@ -22,7 +22,7 @@ export class SQLite implements SqliteConnection {
     if (__DEV__) {
       console.debug(`${this.sessionId}: Execute ${sql} with ${params}`);
     }
-    return await RnSqlite.executeSql(this.name, SqlString.format(sql, params));
+    return await RnSqlite.executeSql(this.name, format(sql, params));
   }
 
   public async runInTransaction(runnable: () => void): Promise<void> {
