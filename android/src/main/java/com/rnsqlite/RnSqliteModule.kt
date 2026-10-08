@@ -65,19 +65,27 @@ class RnSqliteModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
   @ReactMethod
   fun executeSql(name: String, sql: String, promise: Promise) {
     val db = dbMap[name]
-
-    val jsonRows = db?.executeSql(sql)
-
-    val jsonResult = JSONObject()
-    jsonResult.put("rows", jsonRows)
-    val lastInsertRowId = db?.getLastInsertRowId()
-    if (lastInsertRowId != null && lastInsertRowId > 0) {
-      jsonResult.put("last_insert_row_id", lastInsertRowId)
-    } else {
-      jsonResult.put("last_insert_row_id", JSONObject.NULL)
+    if (db == null) {
+      promise.reject("-1", "Database $name is not open")
+      return
     }
 
-    val json = jsonResult.toString()
-    promise.resolve(json)
+    try {
+      val jsonRows = db.executeSql(sql)
+
+      val jsonResult = JSONObject()
+      jsonResult.put("rows", jsonRows)
+      val lastInsertRowId = db.getLastInsertRowId()
+      if (lastInsertRowId != null && lastInsertRowId > 0) {
+        jsonResult.put("last_insert_row_id", lastInsertRowId)
+      } else {
+        jsonResult.put("last_insert_row_id", JSONObject.NULL)
+      }
+
+      val json = jsonResult.toString()
+      promise.resolve(json)
+    } catch (e: Exception) {
+      promise.reject("-1", "Query failed ${e.message}", e)
+    }
   }
 }

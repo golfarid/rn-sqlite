@@ -1,88 +1,81 @@
 import * as React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
-import { SQLiteModule } from 'rn-sqlite';
-import { SqliteConnection } from 'rn-sqlite';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { runTests, type TestResult } from './tests';
 
 export default function App() {
-  const [insertResult, setInsertResult] = React.useState<string | undefined>();
-  const [selectResult, setSelectResult] = React.useState<string | undefined>();
-
-  const dbTest = async (connection: SqliteConnection) => {
-    setInsertResult('Inserting...');
-    let start = new Date().getTime();
-    await connection.runInTransaction(async () => {
-      await connection.executeSql(
-        'CREATE TABLE IF NOT EXISTS test (\n\tid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, \n\tbigint_field BIGINT NOT NULL, ' +
-          '\n\tstring_field VARCHAR NOT NULL, \n\tdouble_field FLOAT NOT NULL, \n\tnull_field VARCHAR\n)',
-        []
-      );
-
-      await connection.executeSql('DELETE FROM test WHERE 1', []);
-
-      for (let i = 0; i < 100; i++) {
-        const resultSet = await connection.executeSql(
-          'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
-          [new Date(), `Some \? string ${i}`, i * 1.1, null]
-        );
-        console.log(resultSet);
-      }
-    });
-
-    const resultSet = await connection.executeSql(
-      'INSERT INTO test (bigint_field, string_field, double_field, null_field) VALUES (?, ?, ?, ?)',
-      [1600214400000, `Some \? string ${100}`, 100 * 1.1, null]
-    );
-    console.log(resultSet);
-
-    setInsertResult(`Insert finished in ${new Date().getTime() - start}`);
-
-    start = new Date().getTime();
-    await connection.runInTransaction(async () => {
-      const resultSet = await connection.executeSql(
-        'SELECT id, bigint_field, string_field, double_field, null_field FROM test',
-        []
-      );
-
-      console.table(resultSet.rows);
-    });
-
-    // await SQLite.close();
-    setSelectResult(`Select finished in ${new Date().getTime() - start}`);
-  };
+  const [results, setResults] = React.useState<TestResult[]>([]);
+  const [finished, setFinished] = React.useState(false);
 
   React.useEffect(() => {
-    SQLiteModule.openDatabase('test.sqlite').then(
-      (connection: SqliteConnection) => {
-        dbTest(connection)
-          .then(() => console.log('query one ok'))
-          .catch(console.error);
-        dbTest(connection)
-          .then(() => console.log('query two ok'))
-          .catch(console.error);
+    let cancelled = false;
+    runTests((result) => {
+      if (cancelled) {
+        return;
       }
-    );
-
-    return () => {
-      SQLiteModule.openDatabase('test.sqlite').then(
-        async (connection: SqliteConnection) => {
-          await connection.close();
-        }
+      setResults((previous) => [...previous, result]);
+      console.log(
+        `[rn-sqlite-test] ${result.status.toUpperCase()} ${result.name}` +
+          (result.message ? `: ${result.message}` : '')
       );
+    }).then((all) => {
+      if (cancelled) {
+        return;
+      }
+      setFinished(true);
+      const failed = all.filter((r) => r.status === 'fail').length;
+      console.log(
+        `[rn-sqlite-test] DONE ${all.length - failed}/${all.length} passed`
+      );
+    });
+    return () => {
+      cancelled = true;
     };
   }, []);
 
+  const failed = results.filter((r) => r.status === 'fail').length;
+
   return (
-    <View style={styles.container}>
-      <Text>Insert result: {insertResult}</Text>
-      <Text>Select result: {selectResult}</Text>
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.summary}>
+        {finished ? 'Finished' : 'Running…'} {results.length - failed}/
+        {results.length} passed
+      </Text>
+      {results.map((result) => (
+        <View key={result.name} style={styles.row}>
+          <Text style={result.status === 'pass' ? styles.pass : styles.fail}>
+            {result.status === 'pass' ? '✓' : '✗'} {result.name} (
+            {result.durationMs} ms)
+          </Text>
+          {result.message ? (
+            <Text style={styles.message}>{result.message}</Text>
+          ) : null}
+        </View>
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 16,
+    paddingTop: 72,
+  },
+  summary: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  row: {
+    marginBottom: 8,
+  },
+  pass: {
+    color: 'green',
+  },
+  fail: {
+    color: 'red',
+  },
+  message: {
+    color: 'gray',
+    marginLeft: 16,
   },
 });
