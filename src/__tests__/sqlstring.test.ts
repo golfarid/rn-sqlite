@@ -6,9 +6,10 @@ describe('format', () => {
     expect(format('SELECT ?', null)).toBe('SELECT ?');
   });
 
-  it('escapes strings by doubling single quotes', () => {
+  it('escapes strings by doubling single quotes only', () => {
     expect(format('SELECT ?', ["it's"])).toBe("SELECT 'it''s'");
-    expect(format('SELECT ?', ['a\\b'])).toBe("SELECT 'a\\\\b'");
+    expect(format('SELECT ?', ['a\\b'])).toBe("SELECT 'a\\b'");
+    expect(format('SELECT ?', ['ctrl\x1a'])).toBe("SELECT 'ctrl\x1a'");
     expect(format('SELECT ?', ['line\nbreak "quoted"'])).toBe(
       'SELECT \'line\nbreak "quoted"\''
     );

@@ -3,17 +3,16 @@
  *
  * Vendored from https://github.com/golfarid/sqlstring, a fork of
  * https://github.com/mysqljs/sqlstring (MIT, Felix Geisendörfer and
- * contributors) adjusted for SQLite: single quotes are escaped by doubling,
- * booleans become 1/0 and Dates become millisecond timestamps.
+ * contributors) adjusted for SQLite: single quotes are escaped by doubling
+ * (SQLite has no backslash escapes), booleans become 1/0 and Dates become
+ * millisecond timestamps.
  */
 
 const ID_GLOBAL_REGEXP = /`/g;
 const QUAL_GLOBAL_REGEXP = /\./g;
-const CHARS_GLOBAL_REGEXP = /[\x1a'\\]/g; // eslint-disable-line no-control-regex
+const CHARS_GLOBAL_REGEXP = /'/g;
 const CHARS_ESCAPE_MAP: Record<string, string> = {
-  '\x1a': '\\Z',
   "'": "''",
-  '\\': '\\\\',
 };
 
 /**
